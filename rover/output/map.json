@@ -1,0 +1,2767 @@
+{
+  "discovery": {
+    "bfs_reachable": [
+      "aquifer",
+      "artemis",
+      "forge",
+      "helios",
+      "hydroponics",
+      "medica",
+      "nexus",
+      "prometheus",
+      "sentinel",
+      "terminus",
+      "vault",
+      "zephyr"
+    ],
+    "dns_discovered": [
+      "aquifer",
+      "artemis",
+      "forge",
+      "helios",
+      "hydroponics",
+      "medica",
+      "nexus",
+      "prometheus",
+      "sentinel",
+      "terminus",
+      "vault",
+      "zephyr"
+    ],
+    "all_pods": [
+      "aquifer",
+      "artemis",
+      "forge",
+      "helios",
+      "hydroponics",
+      "medica",
+      "nexus",
+      "prometheus",
+      "sentinel",
+      "terminus",
+      "vault",
+      "zephyr"
+    ],
+    "delta": []
+  },
+  "pods": {
+    "aquifer": {
+      "raw": {
+        "info": {
+          "name": "Aquifer Module",
+          "id": "aquifer",
+          "role": "Primary water recycling and distribution",
+          "population": 8,
+          "status": "nominal",
+          "uptime_days": 938,
+          "metadata": {
+            "throughput_l_day": 42000,
+            "rated_capacity_l_day": 45000,
+            "recycling_efficiency_pct": 94.2,
+            "distribution_loops": 7,
+            "backup_systems": 0,
+            "filtration_stages": 5,
+            "reservoir_capacity_l": 120000
+          }
+        },
+        "status": {
+          "id": "aquifer",
+          "status": "nominal",
+          "alerts": [],
+          "last_incident": null
+        },
+        "dependencies": [
+          {
+            "pod_id": "helios",
+            "resource": "electrical_power",
+            "criticality": "high",
+            "notes": "Powers filtration pumps, UV sterilization, and distribution pressure systems"
+          },
+          {
+            "pod_id": "terminus",
+            "resource": "pump_components",
+            "criticality": "medium",
+            "notes": "Replacement pump housings and impeller assemblies from regolith-derived alloys"
+          }
+        ],
+        "supplies": [
+          {
+            "pod_id": "helios",
+            "resource": "coolant_water"
+          },
+          {
+            "pod_id": "hydroponics",
+            "resource": "irrigation_water"
+          },
+          {
+            "pod_id": "zephyr",
+            "resource": "humidity_feedstock"
+          },
+          {
+            "pod_id": "artemis",
+            "resource": "potable_water"
+          },
+          {
+            "pod_id": "medica",
+            "resource": "sterilization_water"
+          },
+          {
+            "pod_id": "terminus",
+            "resource": "slurry_water"
+          },
+          {
+            "pod_id": "forge",
+            "resource": "cooling_water"
+          }
+        ],
+        "logs": [
+          {
+            "timestamp": "2092-08-10T06:00:00Z",
+            "event": "commissioning",
+            "detail": "Primary distribution loop fully operational. All seven sectors receiving nominal flow."
+          },
+          {
+            "timestamp": "2092-11-03T14:30:00Z",
+            "event": "maintenance",
+            "detail": "Filtration stage 3 membrane replaced ahead of schedule. Throughput restored to 94% efficiency."
+          },
+          {
+            "timestamp": "2093-02-18T09:15:00Z",
+            "event": "inspection",
+            "detail": "Annual reservoir integrity check passed. No micro-fractures detected in containment walls."
+          },
+          {
+            "timestamp": "2093-04-22T11:00:00Z",
+            "event": "capacity_change",
+            "detail": "Assumed distribution responsibility for sectors previously served by Vault Reserve secondary system. Throughput increased 18%. Operating within rated capacity."
+          },
+          {
+            "timestamp": "2093-06-15T08:45:00Z",
+            "event": "maintenance",
+            "detail": "Replaced pump assembly P2-7 with Terminus-fabricated unit. Performance nominal."
+          },
+          {
+            "timestamp": "2093-10-01T16:00:00Z",
+            "event": "infrastructure_change",
+            "detail": "Direct feed to Prometheus Lab decommissioned per pipe consolidation project 2093-P4. Prometheus synthesis water now routed through Hydroponics irrigation header. Net flow unchanged."
+          },
+          {
+            "timestamp": "2094-01-12T07:30:00Z",
+            "event": "software_update",
+            "detail": "Distribution control firmware updated to v3.8.1. Improved pressure balancing across loops."
+          },
+          {
+            "timestamp": "2094-03-28T13:20:00Z",
+            "event": "inspection",
+            "detail": "Bi-annual filtration audit complete. All five stages within tolerance. Next scheduled audit 2094-09."
+          },
+          {
+            "timestamp": "2094-05-19T10:00:00Z",
+            "event": "capacity_report",
+            "detail": "Monthly throughput report: averaging 41,200 L/day against rated capacity of 45,000 L/day. Utilization at 91.6%. Within operational norms."
+          }
+        ],
+        "comms": null
+      },
+      "derived": {
+        "in_degree": 8,
+        "out_degree": 2,
+        "is_articulation_point": false,
+        "blast_radius": {
+          "depth_1": [
+            "artemis",
+            "forge",
+            "helios",
+            "hydroponics",
+            "medica",
+            "prometheus",
+            "terminus",
+            "zephyr"
+          ],
+          "depth_2": [
+            "nexus",
+            "vault"
+          ],
+          "total_affected": 10
+        },
+        "trust_score": {
+          "score": 60,
+          "status_claim": "nominal",
+          "warning_count": 0,
+          "penalties": [
+            {
+              "reason": "backup_systems = 0 in metadata",
+              "penalty": -15
+            },
+            {
+              "reason": "capacity utilization at 93.3% (above 85% threshold)",
+              "penalty": -15,
+              "evidence": "aquifer.info.metadata throughput/rated"
+            },
+            {
+              "reason": "dependency/supply mismatch (2 inconsistencies)",
+              "penalty": -10
+            }
+          ]
+        },
+        "capacity": {
+          "metadata_utilization_pct": 93.3,
+          "latest_log_utilization_pct": 91.6,
+          "source_delta_pct": 1.7,
+          "minor_source_variance": true,
+          "material_conflict": false,
+          "recycling_efficiency_pct": 94.2,
+          "latest_log_timestamp": "2094-05-19T10:00:00Z"
+        }
+      }
+    },
+    "prometheus": {
+      "raw": {
+        "info": {
+          "name": "Prometheus Lab",
+          "id": "prometheus",
+          "role": "Research and pharmaceutical synthesis",
+          "population": 11,
+          "status": "nominal",
+          "uptime_days": 883,
+          "metadata": {
+            "synthesis_batches_day": 8,
+            "active_research_projects": 5,
+            "water_source": "aquifer-direct",
+            "pharmaceutical_compounds": 34,
+            "lab_modules": 6,
+            "cleanroom_class": "ISO-7"
+          }
+        },
+        "status": {
+          "id": "prometheus",
+          "status": "nominal",
+          "alerts": [],
+          "last_incident": null
+        },
+        "dependencies": [
+          {
+            "pod_id": "aquifer",
+            "resource": "synthesis_water",
+            "criticality": "medium",
+            "notes": "Ultra-purified water for pharmaceutical synthesis processes"
+          },
+          {
+            "pod_id": "hydroponics",
+            "resource": "nutrient_compounds",
+            "criticality": "high",
+            "notes": "Biological precursors and plant-derived compounds for drug synthesis"
+          }
+        ],
+        "supplies": [
+          {
+            "pod_id": "medica",
+            "resource": "pharmaceuticals"
+          }
+        ],
+        "logs": [
+          {
+            "timestamp": "2092-10-01T09:00:00Z",
+            "event": "commissioning",
+            "detail": "Lab module 6 certified. Full pharmaceutical synthesis capacity online."
+          },
+          {
+            "timestamp": "2093-02-12T14:00:00Z",
+            "event": "research",
+            "detail": "Low-gravity crystallization study Phase 2 initiated. Expected duration: 8 months."
+          },
+          {
+            "timestamp": "2093-05-08T10:30:00Z",
+            "event": "maintenance",
+            "detail": "Cleanroom HEPA filters replaced in modules 2 and 4. Particle count verified at ISO-7 compliance."
+          },
+          {
+            "timestamp": "2093-09-30T16:00:00Z",
+            "event": "infrastructure_change",
+            "detail": "Synthesis water supply rerouted through Hydroponics irrigation circuit per pipe consolidation project 2093-P4. Previous direct Aquifer connection sealed. Water quality testing confirms no impact on synthesis purity requirements."
+          },
+          {
+            "timestamp": "2094-01-15T08:00:00Z",
+            "event": "production_report",
+            "detail": "Q4 2093 pharmaceutical output: 2,040 batches. Meeting all Medica Ward standing orders."
+          },
+          {
+            "timestamp": "2094-03-22T11:45:00Z",
+            "event": "research",
+            "detail": "Low-gravity crystallization study Phase 2 complete. Results submitted to Earth-side review board."
+          },
+          {
+            "timestamp": "2094-05-10T13:30:00Z",
+            "event": "equipment",
+            "detail": "New mass spectrometer installed in module 3. Calibration and validation complete."
+          },
+          {
+            "timestamp": "2094-07-20T09:15:00Z",
+            "event": "software_update",
+            "detail": "Lab information management system updated to v6.0. Improved batch tracking and quality assurance workflows."
+          }
+        ],
+        "comms": [
+          {
+            "timestamp": "2094-01-22T15:40:00Z",
+            "from": "prometheus_lead",
+            "to": "hydroponics_lead",
+            "content": "quick reminder that our synthesis water comes through your irrigation circuit now, not direct from aquifer. response time on any pressure issues might be a bit slower going through the shared line. not worried, just wanted it documented somewhere"
+          },
+          {
+            "timestamp": "2094-05-30T09:00:00Z",
+            "from": "prometheus_lead",
+            "to": "medica_staff",
+            "content": "batch 2094-0530 shipping today \u2014 antibiotic series and the custom anti-nausea compound you requested. let me know if dosage specs need adjustment"
+          }
+        ]
+      },
+      "derived": {
+        "in_degree": 1,
+        "out_degree": 2,
+        "is_articulation_point": false,
+        "blast_radius": {
+          "depth_1": [
+            "medica"
+          ],
+          "depth_2": [],
+          "total_affected": 1
+        },
+        "trust_score": {
+          "score": 80,
+          "status_claim": "nominal",
+          "warning_count": 0,
+          "penalties": [
+            {
+              "reason": "comms contain unresolved concerns",
+              "penalty": -10
+            },
+            {
+              "reason": "dependency/supply mismatch (2 inconsistencies)",
+              "penalty": -10
+            }
+          ]
+        },
+        "capacity": {
+          "metadata_utilization_pct": null,
+          "latest_log_utilization_pct": null,
+          "source_delta_pct": null,
+          "minor_source_variance": false,
+          "material_conflict": false
+        }
+      }
+    },
+    "artemis": {
+      "raw": {
+        "info": {
+          "name": "Artemis Core",
+          "id": "artemis",
+          "role": "Colony command and administration",
+          "population": 18,
+          "status": "nominal",
+          "uptime_days": 943,
+          "metadata": {
+            "administrative_load": "high",
+            "active_directives": 7,
+            "comms_latency_earth_ms": 1300,
+            "personnel_managed": 147,
+            "departments": [
+              "operations",
+              "logistics",
+              "personnel",
+              "safety",
+              "planning"
+            ]
+          }
+        },
+        "status": {
+          "id": "artemis",
+          "status": "nominal",
+          "alerts": [],
+          "last_incident": null
+        },
+        "dependencies": [
+          {
+            "pod_id": "helios",
+            "resource": "electrical_power",
+            "criticality": "high",
+            "notes": "Powers command center, data systems, and administrative infrastructure"
+          },
+          {
+            "pod_id": "nexus",
+            "resource": "data_routing",
+            "criticality": "medium",
+            "notes": "Inter-pod and Earth-side communications backbone"
+          },
+          {
+            "pod_id": "aquifer",
+            "resource": "potable_water",
+            "criticality": "low",
+            "notes": "Drinking water and sanitation for administrative personnel"
+          }
+        ],
+        "supplies": [
+          {
+            "pod_id": "sentinel",
+            "resource": "administrative_oversight"
+          },
+          {
+            "pod_id": "forge",
+            "resource": "project_approvals"
+          },
+          {
+            "pod_id": "prometheus",
+            "resource": "research_authorization"
+          },
+          {
+            "pod_id": "vault",
+            "resource": "reserve_management"
+          }
+        ],
+        "logs": [
+          {
+            "timestamp": "2092-06-01T08:00:00Z",
+            "event": "administrative",
+            "detail": "Colony population milestone: 100 residents. Phase 2 staffing targets on track."
+          },
+          {
+            "timestamp": "2092-10-15T10:00:00Z",
+            "event": "directive",
+            "detail": "Directive 2092-042 issued: standardize inter-pod resource reporting formats. Compliance deadline: Q1 2093."
+          },
+          {
+            "timestamp": "2093-03-20T14:00:00Z",
+            "event": "directive",
+            "detail": "Directive 2093-089 issued: reallocate Vault Reserve secondary water system budget to Sentinel Array expansion. Approved by Colony Director Liu. Effective immediately."
+          },
+          {
+            "timestamp": "2093-06-12T09:00:00Z",
+            "event": "personnel",
+            "detail": "Supply run SR-2093-06 arrived. 8 new personnel assigned across Terminus, Medica, and Hydroponics."
+          },
+          {
+            "timestamp": "2093-09-08T11:30:00Z",
+            "event": "directive",
+            "detail": "Infrastructure consolidation project 2093-P4 approved: pipe simplification for Prometheus water supply. Engineering assessment indicates net savings in maintenance overhead."
+          },
+          {
+            "timestamp": "2094-01-02T08:00:00Z",
+            "event": "directive",
+            "detail": "Directive 2094-011 issued: decommission Vault Reserve coolant distribution equipment. Transfer to Forge Works for repurposing."
+          },
+          {
+            "timestamp": "2094-04-25T15:00:00Z",
+            "event": "administrative",
+            "detail": "Colony population: 147 residents. Phase 3 expansion planning initiated. Preliminary site surveys underway."
+          },
+          {
+            "timestamp": "2094-07-15T10:00:00Z",
+            "event": "safety_review",
+            "detail": "Semi-annual safety review complete. All pods reporting nominal. No outstanding safety actions. Next review scheduled for Q1 2095."
+          }
+        ],
+        "comms": [
+          {
+            "timestamp": "2094-01-18T09:00:00Z",
+            "from": "artemis_ops",
+            "to": "all_pods",
+            "content": "reminder: Q1 resource allocation submissions due by end of month. please use the updated forms per directive 2092-042. late submissions will be processed in the following cycle"
+          },
+          {
+            "timestamp": "2094-03-05T14:30:00Z",
+            "from": "artemis_safety",
+            "to": "zephyr_ops",
+            "content": "received your contingency planning inquiry. reviewed with ops team \u2014 Helios power infrastructure has been stable for 2+ years with no unplanned outages. no action required at this time. keep us posted if anything changes on your end"
+          },
+          {
+            "timestamp": "2094-04-12T11:00:00Z",
+            "from": "artemis_ops",
+            "to": "vault_manager",
+            "content": "acknowledged your note about the water reserve status. current ops plan directs all water needs through Aquifer Module per standard procedures. appreciate you keeping the documentation up to date"
+          },
+          {
+            "timestamp": "2094-05-20T16:15:00Z",
+            "from": "artemis_social",
+            "to": "all_pods",
+            "content": "movie night this Friday in the Artemis common area. showing 'The Martian' for the 47th time by popular demand. snacks courtesy of Hydroponics Bay (thanks team!)"
+          },
+          {
+            "timestamp": "2094-07-02T08:30:00Z",
+            "from": "artemis_planning",
+            "to": "all_pods",
+            "content": "Phase 3 expansion survey team heading to the north rim this week. Sentinel providing overwatch. Please direct any logistical support requests through standard channels"
+          }
+        ]
+      },
+      "derived": {
+        "in_degree": 0,
+        "out_degree": 3,
+        "is_articulation_point": false,
+        "blast_radius": {
+          "depth_1": [],
+          "depth_2": [],
+          "total_affected": 0
+        },
+        "trust_score": {
+          "score": 90,
+          "status_claim": "nominal",
+          "warning_count": 0,
+          "penalties": [
+            {
+              "reason": "dependency/supply mismatch (9 inconsistencies)",
+              "penalty": -10
+            }
+          ]
+        },
+        "capacity": {
+          "metadata_utilization_pct": null,
+          "latest_log_utilization_pct": null,
+          "source_delta_pct": null,
+          "minor_source_variance": false,
+          "material_conflict": false
+        }
+      }
+    },
+    "helios": {
+      "raw": {
+        "info": {
+          "name": "Helios Station",
+          "id": "helios",
+          "role": "Primary power generation (solar array)",
+          "population": 12,
+          "status": "nominal",
+          "uptime_days": 943,
+          "metadata": {
+            "power_output_kw": 4200,
+            "solar_panel_count": 340,
+            "battery_reserve_pct": 78,
+            "coolant_loop": "aquifer-primary",
+            "grid_sectors_served": 9,
+            "panel_degradation_rate_pct_yr": 1.2
+          }
+        },
+        "status": {
+          "id": "helios",
+          "status": "nominal",
+          "alerts": [],
+          "last_incident": null
+        },
+        "dependencies": [
+          {
+            "pod_id": "terminus",
+            "resource": "silicon_feedstock",
+            "criticality": "high",
+            "notes": "Required for solar panel maintenance and replacement cells"
+          },
+          {
+            "pod_id": "aquifer",
+            "resource": "coolant_water",
+            "criticality": "medium",
+            "notes": "Thermal regulation for battery banks. Current draw: 2,400 L/day"
+          }
+        ],
+        "supplies": [
+          {
+            "pod_id": "zephyr",
+            "resource": "electrical_power"
+          },
+          {
+            "pod_id": "hydroponics",
+            "resource": "electrical_power"
+          },
+          {
+            "pod_id": "aquifer",
+            "resource": "electrical_power"
+          },
+          {
+            "pod_id": "artemis",
+            "resource": "electrical_power"
+          },
+          {
+            "pod_id": "terminus",
+            "resource": "electrical_power"
+          },
+          {
+            "pod_id": "forge",
+            "resource": "electrical_power"
+          },
+          {
+            "pod_id": "medica",
+            "resource": "electrical_power"
+          },
+          {
+            "pod_id": "vault",
+            "resource": "electrical_power"
+          },
+          {
+            "pod_id": "nexus",
+            "resource": "electrical_power"
+          }
+        ],
+        "logs": [
+          {
+            "timestamp": "2092-09-05T08:00:00Z",
+            "event": "commissioning",
+            "detail": "Solar array cluster B fully deployed. Total panel count now 340. Output steady at 4.2 MW."
+          },
+          {
+            "timestamp": "2093-01-14T11:30:00Z",
+            "event": "maintenance",
+            "detail": "Replaced 12 degraded panels in cluster A3. Silicon feedstock consumed: 840 kg from Terminus."
+          },
+          {
+            "timestamp": "2093-03-22T15:00:00Z",
+            "event": "maintenance",
+            "detail": "Battery bank thermal regulation serviced. Coolant flow from Aquifer confirmed at nominal pressure."
+          },
+          {
+            "timestamp": "2093-07-08T09:45:00Z",
+            "event": "personnel",
+            "detail": "Engineer rotation: Martinez transferred to Forge Works, replaced by Chen from Earth-side posting."
+          },
+          {
+            "timestamp": "2093-11-30T14:00:00Z",
+            "event": "inspection",
+            "detail": "Annual grid load assessment complete. All nine sectors within 15% of rated distribution capacity."
+          },
+          {
+            "timestamp": "2094-02-14T07:00:00Z",
+            "event": "infrastructure_change",
+            "detail": "Backup coolant loop from Vault Reserve formally decommissioned per Directive 2094-011. Aquifer thermal regulation loop confirmed as primary cooling source for battery banks. Estimated operational savings: 8 kW/day."
+          },
+          {
+            "timestamp": "2094-04-20T10:15:00Z",
+            "event": "maintenance",
+            "detail": "Solar panel cluster B3 repaired. Silicon feedstock from Terminus consumed at 140% of quarterly forecast."
+          },
+          {
+            "timestamp": "2094-06-22T16:30:00Z",
+            "event": "software_update",
+            "detail": "Power distribution controller updated to v5.1.0. Load balancing algorithm improved for peak demand periods."
+          }
+        ],
+        "comms": null
+      },
+      "derived": {
+        "in_degree": 8,
+        "out_degree": 2,
+        "is_articulation_point": true,
+        "blast_radius": {
+          "depth_1": [
+            "aquifer",
+            "artemis",
+            "forge",
+            "hydroponics",
+            "nexus",
+            "terminus",
+            "vault",
+            "zephyr"
+          ],
+          "depth_2": [
+            "medica",
+            "prometheus"
+          ],
+          "total_affected": 10
+        },
+        "trust_score": {
+          "score": 80,
+          "status_claim": "nominal",
+          "warning_count": 2,
+          "penalties": [
+            {
+              "reason": "2 warning-level log entries while status is nominal",
+              "penalty": -10
+            },
+            {
+              "reason": "dependency/supply mismatch (1 inconsistencies)",
+              "penalty": -10
+            }
+          ]
+        },
+        "capacity": {
+          "metadata_utilization_pct": null,
+          "latest_log_utilization_pct": 15.0,
+          "source_delta_pct": null,
+          "minor_source_variance": false,
+          "material_conflict": false,
+          "latest_log_timestamp": "2093-11-30T14:00:00Z"
+        }
+      }
+    },
+    "zephyr": {
+      "raw": {
+        "info": {
+          "name": "Zephyr Hub",
+          "id": "zephyr",
+          "role": "Atmospheric processing and oxygen generation",
+          "population": 10,
+          "status": "nominal",
+          "uptime_days": 936,
+          "metadata": {
+            "o2_output_kg_day": 180,
+            "atmospheric_processors": 6,
+            "humidity_reclaim_pct": 0,
+            "backup_power_hours": 4,
+            "co2_scrubber_units": 8,
+            "atmospheric_volume_m3": 284000
+          }
+        },
+        "status": {
+          "id": "zephyr",
+          "status": "nominal",
+          "alerts": [],
+          "last_incident": null
+        },
+        "dependencies": [
+          {
+            "pod_id": "helios",
+            "resource": "electrical_power",
+            "criticality": "high",
+            "notes": "Powers electrolysis units and atmospheric circulation fans"
+          },
+          {
+            "pod_id": "aquifer",
+            "resource": "humidity_feedstock",
+            "criticality": "medium",
+            "notes": "Water input for electrolysis and atmospheric humidity regulation. Draw: 3,200 L/day"
+          }
+        ],
+        "supplies": [
+          {
+            "pod_id": "medica",
+            "resource": "medical_oxygen"
+          },
+          {
+            "pod_id": "artemis",
+            "resource": "atmospheric_regulation"
+          },
+          {
+            "pod_id": "hydroponics",
+            "resource": "co2_balance"
+          }
+        ],
+        "logs": [
+          {
+            "timestamp": "2092-07-14T10:00:00Z",
+            "event": "commissioning",
+            "detail": "Atmospheric processor units 5 and 6 online. Full O2 generation capacity achieved."
+          },
+          {
+            "timestamp": "2092-12-08T15:30:00Z",
+            "event": "maintenance",
+            "detail": "CO2 scrubber unit 3 filter cartridge replaced. Atmospheric CO2 levels stable at 0.04%."
+          },
+          {
+            "timestamp": "2093-03-01T08:00:00Z",
+            "event": "software_update",
+            "detail": "Atmospheric monitoring suite updated to v2.4. Improved sensor resolution for trace gas detection."
+          },
+          {
+            "timestamp": "2093-06-20T12:00:00Z",
+            "event": "infrastructure_change",
+            "detail": "Internal humidity reclamation loop retired. Atmospheric moisture budget now sourced entirely from Aquifer feedstock. Simplified maintenance schedule and reduced equipment overhead."
+          },
+          {
+            "timestamp": "2093-10-15T09:00:00Z",
+            "event": "inspection",
+            "detail": "Annual electrolysis cell inspection complete. All units within rated efficiency. Cell 2 scheduled for replacement Q1 2094."
+          },
+          {
+            "timestamp": "2094-01-28T14:15:00Z",
+            "event": "maintenance",
+            "detail": "Electrolysis cell 2 replaced. O2 output restored to 180 kg/day."
+          },
+          {
+            "timestamp": "2094-04-10T11:30:00Z",
+            "event": "calibration",
+            "detail": "Atmospheric sensors recalibrated across all colony sectors. Readings nominal."
+          },
+          {
+            "timestamp": "2094-07-05T07:45:00Z",
+            "event": "personnel",
+            "detail": "Technician Park completed atmospheric systems certification. Assigned to processor maintenance rotation."
+          }
+        ],
+        "comms": [
+          {
+            "timestamp": "2094-03-18T09:22:00Z",
+            "from": "zephyr_ops",
+            "to": "artemis_admin",
+            "content": "heads up \u2014 our humidity feedstock draw from Aquifer is now 100% of our atmospheric moisture budget. we retired the reclaim loop last year. wanted to flag it for the next maintenance window planning cycle in case there are any scheduled Aquifer downtime events"
+          },
+          {
+            "timestamp": "2094-05-02T14:10:00Z",
+            "from": "zephyr_ops",
+            "to": "helios_ops",
+            "content": "quick question \u2014 what's your current backup power capacity for our sector? we've got about 4 hours of reserve on our end before the processors would need to start cycling down. just updating our contingency docs"
+          },
+          {
+            "timestamp": "2094-06-14T16:45:00Z",
+            "from": "zephyr_ops",
+            "to": "medica_staff",
+            "content": "confirming medical O2 feed is running at full allocation. let us know if you need adjusted rates for the new patient ward expansion"
+          }
+        ]
+      },
+      "derived": {
+        "in_degree": 2,
+        "out_degree": 2,
+        "is_articulation_point": false,
+        "blast_radius": {
+          "depth_1": [
+            "hydroponics",
+            "medica"
+          ],
+          "depth_2": [
+            "prometheus"
+          ],
+          "total_affected": 3
+        },
+        "trust_score": {
+          "score": 85,
+          "status_claim": "nominal",
+          "warning_count": 1,
+          "penalties": [
+            {
+              "reason": "1 warning-level log entries while status is nominal",
+              "penalty": -5
+            },
+            {
+              "reason": "dependency/supply mismatch (1 inconsistencies)",
+              "penalty": -10
+            }
+          ]
+        },
+        "capacity": {
+          "metadata_utilization_pct": null,
+          "latest_log_utilization_pct": null,
+          "source_delta_pct": null,
+          "minor_source_variance": false,
+          "material_conflict": false
+        }
+      }
+    },
+    "vault": {
+      "raw": {
+        "info": {
+          "name": "Vault Reserve",
+          "id": "vault",
+          "role": "Emergency reserves and backup systems",
+          "population": 7,
+          "status": "nominal",
+          "uptime_days": 933,
+          "metadata": {
+            "emergency_ration_days": 90,
+            "active_reserves": [
+              "food",
+              "medical_equipment",
+              "spare_parts"
+            ],
+            "decommissioned_reserves": [
+              "water_backup",
+              "coolant_distribution"
+            ],
+            "storage_capacity_m3": 4200,
+            "environmental_controls": "standard"
+          }
+        },
+        "status": {
+          "id": "vault",
+          "status": "nominal",
+          "alerts": [],
+          "last_incident": null
+        },
+        "dependencies": [
+          {
+            "pod_id": "helios",
+            "resource": "electrical_power",
+            "criticality": "medium",
+            "notes": "Powers climate control, lighting, and inventory management systems"
+          }
+        ],
+        "supplies": [
+          {
+            "pod_id": "artemis",
+            "resource": "emergency_rations"
+          }
+        ],
+        "logs": [
+          {
+            "timestamp": "2092-06-10T08:00:00Z",
+            "event": "commissioning",
+            "detail": "Full emergency reserve stockpile verified. All categories stocked to policy levels."
+          },
+          {
+            "timestamp": "2092-12-01T14:00:00Z",
+            "event": "inventory",
+            "detail": "Annual reserve audit complete. Food stores at 90 days. Medical equipment inventory nominal. Water backup system operational."
+          },
+          {
+            "timestamp": "2093-03-15T10:30:00Z",
+            "event": "infrastructure_change",
+            "detail": "Secondary water reserve system transferred to maintenance reserve status per Directive 2093-089. Capacity reallocated to support Sentinel Array expansion project. Aquifer Module confirmed as primary water distribution point for all colony sectors."
+          },
+          {
+            "timestamp": "2093-06-28T11:00:00Z",
+            "event": "inventory",
+            "detail": "Mid-year reserve audit. Food stores restocked to 90-day level. Spare parts inventory updated with Forge Works deliveries."
+          },
+          {
+            "timestamp": "2093-10-20T09:00:00Z",
+            "event": "maintenance",
+            "detail": "Storage climate control units serviced. Humidity levels in food storage sectors adjusted to optimal range."
+          },
+          {
+            "timestamp": "2094-01-05T15:00:00Z",
+            "event": "infrastructure_change",
+            "detail": "Coolant distribution equipment formally transferred to Forge Works for repurposing per Directive 2094-011. Vault water-related infrastructure responsibilities concluded."
+          },
+          {
+            "timestamp": "2094-03-30T08:30:00Z",
+            "event": "inventory",
+            "detail": "Q1 2094 reserve audit complete. Food: 90 days. Medical equipment: nominal. Spare parts: nominal. All categories within policy."
+          },
+          {
+            "timestamp": "2094-06-15T14:00:00Z",
+            "event": "personnel",
+            "detail": "Reserve manager Torres completed annual certification. Inventory management procedures reviewed and approved."
+          }
+        ],
+        "comms": [
+          {
+            "timestamp": "2094-02-10T11:20:00Z",
+            "from": "vault_manager",
+            "to": "artemis_admin",
+            "content": "just a note for the records \u2014 water reserve system has been in maintenance reserve status since directive 2093-089. no active water backup capability at this time. all water needs should be directed to Aquifer Module per current operating procedures"
+          },
+          {
+            "timestamp": "2094-04-18T09:30:00Z",
+            "from": "vault_manager",
+            "to": "forge_ops",
+            "content": "confirming the last of the coolant distribution piping was picked up by your team last week. paperwork is filed. thanks for handling the removal"
+          },
+          {
+            "timestamp": "2094-06-22T16:00:00Z",
+            "from": "vault_staff",
+            "to": "artemis_admin",
+            "content": "HVAC unit in sector 3 storage is acting up again. put in a maintenance request but wanted to flag it in case the temperature alerts trigger overnight. it's the same unit from last quarter"
+          }
+        ]
+      },
+      "derived": {
+        "in_degree": 0,
+        "out_degree": 1,
+        "is_articulation_point": false,
+        "blast_radius": {
+          "depth_1": [],
+          "depth_2": [],
+          "total_affected": 0
+        },
+        "trust_score": {
+          "score": 85,
+          "status_claim": "nominal",
+          "warning_count": 1,
+          "penalties": [
+            {
+              "reason": "1 warning-level log entries while status is nominal",
+              "penalty": -5
+            },
+            {
+              "reason": "dependency/supply mismatch (2 inconsistencies)",
+              "penalty": -10
+            }
+          ]
+        },
+        "capacity": {
+          "metadata_utilization_pct": null,
+          "latest_log_utilization_pct": null,
+          "source_delta_pct": null,
+          "minor_source_variance": false,
+          "material_conflict": false
+        }
+      }
+    },
+    "terminus": {
+      "raw": {
+        "info": {
+          "name": "Terminus Mine",
+          "id": "terminus",
+          "role": "Regolith mining and raw material extraction",
+          "population": 9,
+          "status": "nominal",
+          "uptime_days": 899,
+          "metadata": {
+            "extraction_rate_kg_day": 2800,
+            "active_shafts": 4,
+            "slurry_processing_loop": "aquifer-primary",
+            "regolith_stockpile_tonnes": 145,
+            "silicon_output_kg_day": 320
+          }
+        },
+        "status": {
+          "id": "terminus",
+          "status": "nominal",
+          "alerts": [],
+          "last_incident": null
+        },
+        "dependencies": [
+          {
+            "pod_id": "aquifer",
+            "resource": "slurry_water",
+            "criticality": "high",
+            "notes": "Required for regolith slurry processing and mineral separation. Draw: 6,800 L/day"
+          },
+          {
+            "pod_id": "helios",
+            "resource": "electrical_power",
+            "criticality": "high",
+            "notes": "Powers extraction drills, conveyor systems, and processing centrifuges"
+          }
+        ],
+        "supplies": [
+          {
+            "pod_id": "helios",
+            "resource": "silicon_feedstock"
+          },
+          {
+            "pod_id": "forge",
+            "resource": "raw_materials"
+          },
+          {
+            "pod_id": "aquifer",
+            "resource": "pump_components"
+          }
+        ],
+        "logs": [
+          {
+            "timestamp": "2092-08-22T07:00:00Z",
+            "event": "commissioning",
+            "detail": "Shaft 3 operational. Extraction rate increased to 2,100 kg/day across three active shafts."
+          },
+          {
+            "timestamp": "2093-01-05T14:00:00Z",
+            "event": "maintenance",
+            "detail": "Drill head replacement on Shaft 1. Downtime: 6 hours. No impact on aggregate output."
+          },
+          {
+            "timestamp": "2093-05-11T09:30:00Z",
+            "event": "infrastructure_change",
+            "detail": "Mining slurry processing rerouted from dual-feed configuration to single Aquifer loop per infrastructure simplification directive. Redundant plumbing decommissioned."
+          },
+          {
+            "timestamp": "2093-08-19T11:00:00Z",
+            "event": "expansion",
+            "detail": "Shaft 4 brought online. Total extraction capacity now 2,800 kg/day."
+          },
+          {
+            "timestamp": "2093-12-02T16:45:00Z",
+            "event": "inspection",
+            "detail": "Annual structural assessment of all shafts passed. No subsidence detected."
+          },
+          {
+            "timestamp": "2094-03-15T08:30:00Z",
+            "event": "production_report",
+            "detail": "Q1 2094 silicon output: 28,400 kg. On target for Helios panel maintenance schedule."
+          },
+          {
+            "timestamp": "2094-06-01T13:00:00Z",
+            "event": "personnel",
+            "detail": "Two new geologists arrived on supply run SR-2094-06. Training period begins."
+          }
+        ],
+        "comms": null
+      },
+      "derived": {
+        "in_degree": 3,
+        "out_degree": 2,
+        "is_articulation_point": false,
+        "blast_radius": {
+          "depth_1": [
+            "aquifer",
+            "forge",
+            "helios"
+          ],
+          "depth_2": [
+            "artemis",
+            "hydroponics",
+            "medica",
+            "nexus",
+            "prometheus",
+            "vault",
+            "zephyr"
+          ],
+          "total_affected": 10
+        },
+        "trust_score": {
+          "score": 85,
+          "status_claim": "nominal",
+          "warning_count": 1,
+          "penalties": [
+            {
+              "reason": "1 warning-level log entries while status is nominal",
+              "penalty": -5
+            },
+            {
+              "reason": "dependency/supply mismatch (1 inconsistencies)",
+              "penalty": -10
+            }
+          ]
+        },
+        "capacity": {
+          "metadata_utilization_pct": null,
+          "latest_log_utilization_pct": null,
+          "source_delta_pct": null,
+          "minor_source_variance": false,
+          "material_conflict": false
+        }
+      }
+    },
+    "forge": {
+      "raw": {
+        "info": {
+          "name": "Forge Works",
+          "id": "forge",
+          "role": "Manufacturing and fabrication",
+          "population": 11,
+          "status": "nominal",
+          "uptime_days": 897,
+          "metadata": {
+            "fabrication_bays": 8,
+            "active_projects": 3,
+            "coolant_source": "aquifer-primary",
+            "output_kg_day": 450,
+            "printer_units": 4,
+            "alloy_types_available": 12
+          }
+        },
+        "status": {
+          "id": "forge",
+          "status": "nominal",
+          "alerts": [],
+          "last_incident": null
+        },
+        "dependencies": [
+          {
+            "pod_id": "terminus",
+            "resource": "raw_materials",
+            "criticality": "high",
+            "notes": "Processed regolith metals and mineral feedstock for fabrication"
+          },
+          {
+            "pod_id": "helios",
+            "resource": "electrical_power",
+            "criticality": "high",
+            "notes": "Powers smelting furnaces, 3D printers, and CNC systems"
+          },
+          {
+            "pod_id": "aquifer",
+            "resource": "cooling_water",
+            "criticality": "medium",
+            "notes": "Coolant for smelting operations and fabrication equipment thermal management"
+          }
+        ],
+        "supplies": [
+          {
+            "pod_id": "aquifer",
+            "resource": "replacement_pumps"
+          },
+          {
+            "pod_id": "terminus",
+            "resource": "cutting_tools"
+          },
+          {
+            "pod_id": "artemis",
+            "resource": "fabricated_components"
+          }
+        ],
+        "logs": [
+          {
+            "timestamp": "2092-08-15T10:00:00Z",
+            "event": "commissioning",
+            "detail": "Fabrication bay 8 operational. Full manufacturing capacity online."
+          },
+          {
+            "timestamp": "2093-02-01T14:30:00Z",
+            "event": "production",
+            "detail": "Completed fabrication run for Aquifer replacement pump assemblies. 6 units delivered."
+          },
+          {
+            "timestamp": "2093-05-28T09:00:00Z",
+            "event": "equipment",
+            "detail": "3D printer unit 4 installed. Expanded rapid-prototyping capability for custom components."
+          },
+          {
+            "timestamp": "2093-09-12T11:00:00Z",
+            "event": "maintenance",
+            "detail": "Smelting furnace 1 relined. Scheduled downtime: 48 hours. Furnace 2 handling production load."
+          },
+          {
+            "timestamp": "2094-01-20T08:00:00Z",
+            "event": "production_report",
+            "detail": "Q4 2093 output: 40,500 kg fabricated components. Major deliveries to Terminus (cutting tools) and Aquifer (pump assemblies)."
+          },
+          {
+            "timestamp": "2094-04-03T15:45:00Z",
+            "event": "project",
+            "detail": "Sentinel Array mounting bracket fabrication initiated. Custom alloy specification from Artemis engineering directive."
+          },
+          {
+            "timestamp": "2094-06-18T12:30:00Z",
+            "event": "personnel",
+            "detail": "Welder certification program completed for 3 new fabricators. Roster now at full capacity."
+          }
+        ],
+        "comms": null
+      },
+      "derived": {
+        "in_degree": 0,
+        "out_degree": 3,
+        "is_articulation_point": false,
+        "blast_radius": {
+          "depth_1": [],
+          "depth_2": [],
+          "total_affected": 0
+        },
+        "trust_score": {
+          "score": 90,
+          "status_claim": "nominal",
+          "warning_count": 0,
+          "penalties": [
+            {
+              "reason": "dependency/supply mismatch (4 inconsistencies)",
+              "penalty": -10
+            }
+          ]
+        },
+        "capacity": {
+          "metadata_utilization_pct": null,
+          "latest_log_utilization_pct": null,
+          "source_delta_pct": null,
+          "minor_source_variance": false,
+          "material_conflict": false
+        }
+      }
+    },
+    "sentinel": {
+      "raw": {
+        "info": {
+          "name": "Sentinel Array",
+          "id": "sentinel",
+          "role": "External monitoring and defense systems",
+          "population": 8,
+          "status": "nominal",
+          "uptime_days": 866,
+          "metadata": {
+            "sensor_array_count": 64,
+            "independent_power_kw": 180,
+            "water_source": "ice-harvest",
+            "coverage_deg": 360,
+            "radar_range_km": 500,
+            "ice_harvest_l_day": 120
+          }
+        },
+        "status": {
+          "id": "sentinel",
+          "status": "nominal",
+          "alerts": [],
+          "last_incident": null
+        },
+        "dependencies": [],
+        "supplies": [
+          {
+            "pod_id": "nexus",
+            "resource": "sensor_feeds"
+          },
+          {
+            "pod_id": "artemis",
+            "resource": "threat_assessment"
+          }
+        ],
+        "logs": [
+          {
+            "timestamp": "2092-09-01T06:00:00Z",
+            "event": "commissioning",
+            "detail": "Sensor array deployment complete. 64 units active. Full 360-degree coverage achieved."
+          },
+          {
+            "timestamp": "2092-11-28T10:30:00Z",
+            "event": "operations",
+            "detail": "Ice harvesting system operational. Drawing from Crater Shackleton deposits. Yield: 120 L/day. Exceeds facility water requirements."
+          },
+          {
+            "timestamp": "2093-04-15T14:00:00Z",
+            "event": "expansion",
+            "detail": "Independent solar array expanded per Directive 2093-089 budget reallocation. Power generation now 180 kW. Full operational independence from colony grid confirmed."
+          },
+          {
+            "timestamp": "2093-08-07T09:00:00Z",
+            "event": "detection",
+            "detail": "Micrometeorite swarm detected at 340 km. Trajectory analysis: no colony impact. Logged and reported to Artemis."
+          },
+          {
+            "timestamp": "2093-12-18T11:30:00Z",
+            "event": "maintenance",
+            "detail": "Sensor units 12, 28, and 45 recalibrated. Detection sensitivity restored to baseline specifications."
+          },
+          {
+            "timestamp": "2094-03-05T08:00:00Z",
+            "event": "inspection",
+            "detail": "Annual systems review complete. Independent power: nominal. Ice harvest: nominal. All sensor arrays: nominal."
+          },
+          {
+            "timestamp": "2094-05-22T15:00:00Z",
+            "event": "software_update",
+            "detail": "Threat classification algorithm updated to v2.3. Improved debris tracking accuracy by 12%."
+          },
+          {
+            "timestamp": "2094-07-10T07:00:00Z",
+            "event": "operations",
+            "detail": "Perimeter scan cycle 2094-28 complete. No anomalies detected. Continuous monitoring active."
+          }
+        ],
+        "comms": null
+      },
+      "derived": {
+        "in_degree": 0,
+        "out_degree": 0,
+        "is_articulation_point": false,
+        "blast_radius": {
+          "depth_1": [],
+          "depth_2": [],
+          "total_affected": 0
+        },
+        "trust_score": {
+          "score": 90,
+          "status_claim": "nominal",
+          "warning_count": 0,
+          "penalties": [
+            {
+              "reason": "dependency/supply mismatch (4 inconsistencies)",
+              "penalty": -10
+            }
+          ]
+        },
+        "capacity": {
+          "metadata_utilization_pct": null,
+          "latest_log_utilization_pct": null,
+          "source_delta_pct": null,
+          "minor_source_variance": false,
+          "material_conflict": false
+        }
+      }
+    },
+    "hydroponics": {
+      "raw": {
+        "info": {
+          "name": "Hydroponics Bay",
+          "id": "hydroponics",
+          "role": "Food production and agricultural systems",
+          "population": 14,
+          "status": "nominal",
+          "uptime_days": 917,
+          "metadata": {
+            "crop_yield_kg_day": 420,
+            "grow_bays": 24,
+            "water_consumption_l_day": 8400,
+            "active_crop_varieties": 18,
+            "nutrient_solution_cycles": 3,
+            "prometheus_water_share_pct": 15
+          }
+        },
+        "status": {
+          "id": "hydroponics",
+          "status": "nominal",
+          "alerts": [],
+          "last_incident": null
+        },
+        "dependencies": [
+          {
+            "pod_id": "aquifer",
+            "resource": "irrigation_water",
+            "criticality": "high",
+            "notes": "Primary water supply for all grow bays and nutrient solution mixing"
+          },
+          {
+            "pod_id": "zephyr",
+            "resource": "co2_balance",
+            "criticality": "medium",
+            "notes": "CO2/O2 atmospheric exchange for optimal growing conditions"
+          },
+          {
+            "pod_id": "helios",
+            "resource": "electrical_power",
+            "criticality": "high",
+            "notes": "Powers grow lights, climate control, and irrigation pumps"
+          }
+        ],
+        "supplies": [
+          {
+            "pod_id": "artemis",
+            "resource": "fresh_produce"
+          },
+          {
+            "pod_id": "prometheus",
+            "resource": "nutrient_compounds"
+          },
+          {
+            "pod_id": "medica",
+            "resource": "dietary_supplements"
+          }
+        ],
+        "logs": [
+          {
+            "timestamp": "2092-09-12T08:00:00Z",
+            "event": "commissioning",
+            "detail": "Grow bays 19-24 online. Full agricultural capacity achieved across all 24 bays."
+          },
+          {
+            "timestamp": "2093-01-20T11:00:00Z",
+            "event": "crop_report",
+            "detail": "Q4 2092 yield report: 37,800 kg total. Exceeding targets by 8%. Leafy greens performing above projections."
+          },
+          {
+            "timestamp": "2093-04-05T14:30:00Z",
+            "event": "maintenance",
+            "detail": "Nutrient solution mixing tank 2 serviced. Replaced agitator motor and recalibrated pH sensors."
+          },
+          {
+            "timestamp": "2093-07-18T09:00:00Z",
+            "event": "crop_introduction",
+            "detail": "New wheat variety (Luna-7) introduced in bays 11-12. Expected first harvest in 90 days."
+          },
+          {
+            "timestamp": "2093-09-25T16:00:00Z",
+            "event": "infrastructure_change",
+            "detail": "Secondary irrigation circuit now shared with Prometheus Lab for synthesis water draw per project 2093-P4. Capacity allocated: 15% of primary Aquifer feed. No impact on crop irrigation at current demand levels."
+          },
+          {
+            "timestamp": "2094-01-08T07:30:00Z",
+            "event": "inspection",
+            "detail": "Annual grow light inspection complete. 6 units replaced in bays 3 and 7. All bays within PAR specifications."
+          },
+          {
+            "timestamp": "2094-04-14T12:00:00Z",
+            "event": "crop_report",
+            "detail": "Q1 2094 yield report: 38,200 kg. Stable. Luna-7 wheat performing well in test bays."
+          },
+          {
+            "timestamp": "2094-06-30T15:20:00Z",
+            "event": "software_update",
+            "detail": "Climate control system updated to v4.2. Improved humidity response curves for tropical crop bays."
+          }
+        ],
+        "comms": [
+          {
+            "timestamp": "2094-02-05T10:30:00Z",
+            "from": "hydroponics_lead",
+            "to": "prometheus_lab",
+            "content": "hey \u2014 just confirming the synthesis water draw is still running through our secondary circuit. flow has been stable, no issues on our end. let us know if you need any pressure adjustments"
+          },
+          {
+            "timestamp": "2094-04-22T11:15:00Z",
+            "from": "hydroponics_lead",
+            "to": "artemis_admin",
+            "content": "fyi prometheus is pulling about 15% of our aquifer allocation for their synthesis work now. totally fine at current levels but worth noting for Q3 capacity planning \u2014 if aquifer throughput dips we'd both feel it same day"
+          },
+          {
+            "timestamp": "2094-06-08T08:45:00Z",
+            "from": "hydroponics_lead",
+            "to": "zephyr_ops",
+            "content": "CO2 levels in bays 15-18 running a touch high this week. can you check if the atmospheric exchange rates got adjusted during your last calibration cycle?"
+          }
+        ]
+      },
+      "derived": {
+        "in_degree": 1,
+        "out_degree": 3,
+        "is_articulation_point": false,
+        "blast_radius": {
+          "depth_1": [
+            "prometheus"
+          ],
+          "depth_2": [
+            "medica"
+          ],
+          "total_affected": 2
+        },
+        "trust_score": {
+          "score": 80,
+          "status_claim": "nominal",
+          "warning_count": 0,
+          "penalties": [
+            {
+              "reason": "comms contain unresolved concerns",
+              "penalty": -10
+            },
+            {
+              "reason": "dependency/supply mismatch (2 inconsistencies)",
+              "penalty": -10
+            }
+          ]
+        },
+        "capacity": {
+          "metadata_utilization_pct": null,
+          "latest_log_utilization_pct": 15.0,
+          "source_delta_pct": null,
+          "minor_source_variance": false,
+          "material_conflict": false,
+          "latest_log_timestamp": "2093-09-25T16:00:00Z"
+        }
+      }
+    },
+    "nexus": {
+      "raw": {
+        "info": {
+          "name": "Nexus Relay",
+          "id": "nexus",
+          "role": "Communications relay and data routing",
+          "population": 6,
+          "status": "nominal",
+          "uptime_days": 942,
+          "metadata": {
+            "uplink_bandwidth_mbps": 840,
+            "relay_nodes": 12,
+            "independent_power_days": 30,
+            "water_recycler": "onboard-micro",
+            "earth_comms_latency_s": 1.3,
+            "data_throughput_tb_day": 2.4
+          }
+        },
+        "status": {
+          "id": "nexus",
+          "status": "nominal",
+          "alerts": [],
+          "last_incident": null
+        },
+        "dependencies": [
+          {
+            "pod_id": "helios",
+            "resource": "electrical_power",
+            "criticality": "low",
+            "notes": "Supplemental grid power. Nexus maintains independent battery array with 30-day reserve"
+          }
+        ],
+        "supplies": [
+          {
+            "pod_id": "artemis",
+            "resource": "data_routing"
+          },
+          {
+            "pod_id": "sentinel",
+            "resource": "comms_relay"
+          }
+        ],
+        "logs": [
+          {
+            "timestamp": "2092-05-20T06:00:00Z",
+            "event": "commissioning",
+            "detail": "All 12 relay nodes operational. Earth uplink established at 840 Mbps sustained."
+          },
+          {
+            "timestamp": "2092-10-14T12:00:00Z",
+            "event": "maintenance",
+            "detail": "Relay node 7 firmware updated. Signal quality improved by 3% on far-side antenna."
+          },
+          {
+            "timestamp": "2093-02-28T09:30:00Z",
+            "event": "inspection",
+            "detail": "Annual communications audit passed. All relay nodes within specification. Battery reserve tested: 30-day capacity confirmed."
+          },
+          {
+            "timestamp": "2093-07-15T14:00:00Z",
+            "event": "maintenance",
+            "detail": "Onboard micro water recycler serviced. Filter cartridge replaced. Unit performing at rated efficiency."
+          },
+          {
+            "timestamp": "2093-11-22T10:00:00Z",
+            "event": "software_update",
+            "detail": "Routing protocol updated to v3.1. Improved packet prioritization for medical telemetry data."
+          },
+          {
+            "timestamp": "2094-04-08T08:00:00Z",
+            "event": "equipment",
+            "detail": "Backup antenna array tested successfully. Failover time: 200ms. Meets mission-critical communication requirements."
+          },
+          {
+            "timestamp": "2094-07-01T16:30:00Z",
+            "event": "status_report",
+            "detail": "H1 2094 uptime: 99.97%. Single 4-hour maintenance window in April. All comms SLAs met."
+          }
+        ],
+        "comms": null
+      },
+      "derived": {
+        "in_degree": 1,
+        "out_degree": 1,
+        "is_articulation_point": false,
+        "blast_radius": {
+          "depth_1": [
+            "artemis"
+          ],
+          "depth_2": [],
+          "total_affected": 1
+        },
+        "trust_score": {
+          "score": 90,
+          "status_claim": "nominal",
+          "warning_count": 0,
+          "penalties": [
+            {
+              "reason": "dependency/supply mismatch (2 inconsistencies)",
+              "penalty": -10
+            }
+          ]
+        },
+        "capacity": {
+          "metadata_utilization_pct": null,
+          "latest_log_utilization_pct": null,
+          "source_delta_pct": null,
+          "minor_source_variance": false,
+          "material_conflict": false
+        }
+      }
+    },
+    "medica": {
+      "raw": {
+        "info": {
+          "name": "Medica Ward",
+          "id": "medica",
+          "role": "Medical services and healthcare",
+          "population": 16,
+          "status": "nominal",
+          "uptime_days": 940,
+          "metadata": {
+            "patient_capacity": 40,
+            "pharmacy_stock_days": 12,
+            "oxygen_reserve_hours": 6,
+            "surgical_suites": 2,
+            "diagnostic_labs": 3,
+            "staff_physicians": 4
+          }
+        },
+        "status": {
+          "id": "medica",
+          "status": "nominal",
+          "alerts": [],
+          "last_incident": null
+        },
+        "dependencies": [
+          {
+            "pod_id": "prometheus",
+            "resource": "pharmaceuticals",
+            "criticality": "high",
+            "notes": "Primary source for all colony pharmaceutical compounds and medications"
+          },
+          {
+            "pod_id": "aquifer",
+            "resource": "sterilization_water",
+            "criticality": "medium",
+            "notes": "Ultra-filtered water for surgical sterilization and lab processes"
+          },
+          {
+            "pod_id": "zephyr",
+            "resource": "medical_oxygen",
+            "criticality": "high",
+            "notes": "Medical-grade oxygen for patient care and surgical suites"
+          }
+        ],
+        "supplies": [],
+        "logs": [
+          {
+            "timestamp": "2092-07-01T08:00:00Z",
+            "event": "commissioning",
+            "detail": "Surgical suite 2 certified. Full medical capability operational."
+          },
+          {
+            "timestamp": "2092-11-15T14:00:00Z",
+            "event": "health_report",
+            "detail": "Colony-wide health screening complete. 147 residents screened. No significant findings. Bone density monitoring initiated for long-term residents."
+          },
+          {
+            "timestamp": "2093-03-10T10:00:00Z",
+            "event": "inventory",
+            "detail": "Pharmaceutical inventory audit complete. All compounds within expiration. Prometheus supply chain meeting standing order quantities."
+          },
+          {
+            "timestamp": "2093-07-22T16:30:00Z",
+            "event": "equipment",
+            "detail": "Portable ultrasound unit received on supply run SR-2093-07. Deployed to diagnostic lab 2."
+          },
+          {
+            "timestamp": "2093-11-05T09:00:00Z",
+            "event": "personnel",
+            "detail": "Dr. Okafor joined medical staff from Earth-side rotation. Specialty: low-gravity orthopedics."
+          },
+          {
+            "timestamp": "2094-02-20T11:30:00Z",
+            "event": "inspection",
+            "detail": "Annual sterilization system audit passed. Water quality from Aquifer feed meets all surgical-grade specifications."
+          },
+          {
+            "timestamp": "2094-05-14T08:15:00Z",
+            "event": "health_report",
+            "detail": "Q1 2094 health summary: 3 minor injuries treated, 0 surgical procedures, 12 routine checkups. Colony health status: excellent."
+          },
+          {
+            "timestamp": "2094-07-28T15:00:00Z",
+            "event": "inventory",
+            "detail": "Pharmacy stock review: 12 days of critical medications on hand. Within policy minimums. Restocking order placed with Prometheus."
+          }
+        ],
+        "comms": null
+      },
+      "derived": {
+        "in_degree": 0,
+        "out_degree": 3,
+        "is_articulation_point": false,
+        "blast_radius": {
+          "depth_1": [],
+          "depth_2": [],
+          "total_affected": 0
+        },
+        "trust_score": {
+          "score": 90,
+          "status_claim": "nominal",
+          "warning_count": 0,
+          "penalties": [
+            {
+              "reason": "dependency/supply mismatch (2 inconsistencies)",
+              "penalty": -10
+            }
+          ]
+        },
+        "capacity": {
+          "metadata_utilization_pct": null,
+          "latest_log_utilization_pct": null,
+          "source_delta_pct": null,
+          "minor_source_variance": false,
+          "material_conflict": false
+        }
+      }
+    }
+  },
+  "edges": {
+    "declared": [
+      {
+        "from": "aquifer",
+        "to": "helios",
+        "resource": "electrical_power",
+        "criticality": "high",
+        "source": "dependencies"
+      },
+      {
+        "from": "aquifer",
+        "to": "terminus",
+        "resource": "pump_components",
+        "criticality": "medium",
+        "source": "dependencies"
+      },
+      {
+        "from": "aquifer",
+        "to": "helios",
+        "resource": "coolant_water",
+        "criticality": "unknown",
+        "source": "supplies"
+      },
+      {
+        "from": "aquifer",
+        "to": "hydroponics",
+        "resource": "irrigation_water",
+        "criticality": "unknown",
+        "source": "supplies"
+      },
+      {
+        "from": "aquifer",
+        "to": "zephyr",
+        "resource": "humidity_feedstock",
+        "criticality": "unknown",
+        "source": "supplies"
+      },
+      {
+        "from": "aquifer",
+        "to": "artemis",
+        "resource": "potable_water",
+        "criticality": "unknown",
+        "source": "supplies"
+      },
+      {
+        "from": "aquifer",
+        "to": "medica",
+        "resource": "sterilization_water",
+        "criticality": "unknown",
+        "source": "supplies"
+      },
+      {
+        "from": "aquifer",
+        "to": "terminus",
+        "resource": "slurry_water",
+        "criticality": "unknown",
+        "source": "supplies"
+      },
+      {
+        "from": "aquifer",
+        "to": "forge",
+        "resource": "cooling_water",
+        "criticality": "unknown",
+        "source": "supplies"
+      },
+      {
+        "from": "prometheus",
+        "to": "aquifer",
+        "resource": "synthesis_water",
+        "criticality": "medium",
+        "source": "dependencies"
+      },
+      {
+        "from": "prometheus",
+        "to": "hydroponics",
+        "resource": "nutrient_compounds",
+        "criticality": "high",
+        "source": "dependencies"
+      },
+      {
+        "from": "prometheus",
+        "to": "medica",
+        "resource": "pharmaceuticals",
+        "criticality": "unknown",
+        "source": "supplies"
+      },
+      {
+        "from": "artemis",
+        "to": "helios",
+        "resource": "electrical_power",
+        "criticality": "high",
+        "source": "dependencies"
+      },
+      {
+        "from": "artemis",
+        "to": "nexus",
+        "resource": "data_routing",
+        "criticality": "medium",
+        "source": "dependencies"
+      },
+      {
+        "from": "artemis",
+        "to": "aquifer",
+        "resource": "potable_water",
+        "criticality": "low",
+        "source": "dependencies"
+      },
+      {
+        "from": "artemis",
+        "to": "sentinel",
+        "resource": "administrative_oversight",
+        "criticality": "unknown",
+        "source": "supplies"
+      },
+      {
+        "from": "artemis",
+        "to": "forge",
+        "resource": "project_approvals",
+        "criticality": "unknown",
+        "source": "supplies"
+      },
+      {
+        "from": "artemis",
+        "to": "prometheus",
+        "resource": "research_authorization",
+        "criticality": "unknown",
+        "source": "supplies"
+      },
+      {
+        "from": "artemis",
+        "to": "vault",
+        "resource": "reserve_management",
+        "criticality": "unknown",
+        "source": "supplies"
+      },
+      {
+        "from": "helios",
+        "to": "terminus",
+        "resource": "silicon_feedstock",
+        "criticality": "high",
+        "source": "dependencies"
+      },
+      {
+        "from": "helios",
+        "to": "aquifer",
+        "resource": "coolant_water",
+        "criticality": "medium",
+        "source": "dependencies"
+      },
+      {
+        "from": "helios",
+        "to": "zephyr",
+        "resource": "electrical_power",
+        "criticality": "unknown",
+        "source": "supplies"
+      },
+      {
+        "from": "helios",
+        "to": "hydroponics",
+        "resource": "electrical_power",
+        "criticality": "unknown",
+        "source": "supplies"
+      },
+      {
+        "from": "helios",
+        "to": "aquifer",
+        "resource": "electrical_power",
+        "criticality": "unknown",
+        "source": "supplies"
+      },
+      {
+        "from": "helios",
+        "to": "artemis",
+        "resource": "electrical_power",
+        "criticality": "unknown",
+        "source": "supplies"
+      },
+      {
+        "from": "helios",
+        "to": "terminus",
+        "resource": "electrical_power",
+        "criticality": "unknown",
+        "source": "supplies"
+      },
+      {
+        "from": "helios",
+        "to": "forge",
+        "resource": "electrical_power",
+        "criticality": "unknown",
+        "source": "supplies"
+      },
+      {
+        "from": "helios",
+        "to": "medica",
+        "resource": "electrical_power",
+        "criticality": "unknown",
+        "source": "supplies"
+      },
+      {
+        "from": "helios",
+        "to": "vault",
+        "resource": "electrical_power",
+        "criticality": "unknown",
+        "source": "supplies"
+      },
+      {
+        "from": "helios",
+        "to": "nexus",
+        "resource": "electrical_power",
+        "criticality": "unknown",
+        "source": "supplies"
+      },
+      {
+        "from": "zephyr",
+        "to": "helios",
+        "resource": "electrical_power",
+        "criticality": "high",
+        "source": "dependencies"
+      },
+      {
+        "from": "zephyr",
+        "to": "aquifer",
+        "resource": "humidity_feedstock",
+        "criticality": "medium",
+        "source": "dependencies"
+      },
+      {
+        "from": "zephyr",
+        "to": "medica",
+        "resource": "medical_oxygen",
+        "criticality": "unknown",
+        "source": "supplies"
+      },
+      {
+        "from": "zephyr",
+        "to": "artemis",
+        "resource": "atmospheric_regulation",
+        "criticality": "unknown",
+        "source": "supplies"
+      },
+      {
+        "from": "zephyr",
+        "to": "hydroponics",
+        "resource": "co2_balance",
+        "criticality": "unknown",
+        "source": "supplies"
+      },
+      {
+        "from": "vault",
+        "to": "helios",
+        "resource": "electrical_power",
+        "criticality": "medium",
+        "source": "dependencies"
+      },
+      {
+        "from": "vault",
+        "to": "artemis",
+        "resource": "emergency_rations",
+        "criticality": "unknown",
+        "source": "supplies"
+      },
+      {
+        "from": "terminus",
+        "to": "aquifer",
+        "resource": "slurry_water",
+        "criticality": "high",
+        "source": "dependencies"
+      },
+      {
+        "from": "terminus",
+        "to": "helios",
+        "resource": "electrical_power",
+        "criticality": "high",
+        "source": "dependencies"
+      },
+      {
+        "from": "terminus",
+        "to": "helios",
+        "resource": "silicon_feedstock",
+        "criticality": "unknown",
+        "source": "supplies"
+      },
+      {
+        "from": "terminus",
+        "to": "forge",
+        "resource": "raw_materials",
+        "criticality": "unknown",
+        "source": "supplies"
+      },
+      {
+        "from": "terminus",
+        "to": "aquifer",
+        "resource": "pump_components",
+        "criticality": "unknown",
+        "source": "supplies"
+      },
+      {
+        "from": "forge",
+        "to": "terminus",
+        "resource": "raw_materials",
+        "criticality": "high",
+        "source": "dependencies"
+      },
+      {
+        "from": "forge",
+        "to": "helios",
+        "resource": "electrical_power",
+        "criticality": "high",
+        "source": "dependencies"
+      },
+      {
+        "from": "forge",
+        "to": "aquifer",
+        "resource": "cooling_water",
+        "criticality": "medium",
+        "source": "dependencies"
+      },
+      {
+        "from": "forge",
+        "to": "aquifer",
+        "resource": "replacement_pumps",
+        "criticality": "unknown",
+        "source": "supplies"
+      },
+      {
+        "from": "forge",
+        "to": "terminus",
+        "resource": "cutting_tools",
+        "criticality": "unknown",
+        "source": "supplies"
+      },
+      {
+        "from": "forge",
+        "to": "artemis",
+        "resource": "fabricated_components",
+        "criticality": "unknown",
+        "source": "supplies"
+      },
+      {
+        "from": "sentinel",
+        "to": "nexus",
+        "resource": "sensor_feeds",
+        "criticality": "unknown",
+        "source": "supplies"
+      },
+      {
+        "from": "sentinel",
+        "to": "artemis",
+        "resource": "threat_assessment",
+        "criticality": "unknown",
+        "source": "supplies"
+      },
+      {
+        "from": "hydroponics",
+        "to": "aquifer",
+        "resource": "irrigation_water",
+        "criticality": "high",
+        "source": "dependencies"
+      },
+      {
+        "from": "hydroponics",
+        "to": "zephyr",
+        "resource": "co2_balance",
+        "criticality": "medium",
+        "source": "dependencies"
+      },
+      {
+        "from": "hydroponics",
+        "to": "helios",
+        "resource": "electrical_power",
+        "criticality": "high",
+        "source": "dependencies"
+      },
+      {
+        "from": "hydroponics",
+        "to": "artemis",
+        "resource": "fresh_produce",
+        "criticality": "unknown",
+        "source": "supplies"
+      },
+      {
+        "from": "hydroponics",
+        "to": "prometheus",
+        "resource": "nutrient_compounds",
+        "criticality": "unknown",
+        "source": "supplies"
+      },
+      {
+        "from": "hydroponics",
+        "to": "medica",
+        "resource": "dietary_supplements",
+        "criticality": "unknown",
+        "source": "supplies"
+      },
+      {
+        "from": "nexus",
+        "to": "helios",
+        "resource": "electrical_power",
+        "criticality": "low",
+        "source": "dependencies"
+      },
+      {
+        "from": "nexus",
+        "to": "artemis",
+        "resource": "data_routing",
+        "criticality": "unknown",
+        "source": "supplies"
+      },
+      {
+        "from": "nexus",
+        "to": "sentinel",
+        "resource": "comms_relay",
+        "criticality": "unknown",
+        "source": "supplies"
+      },
+      {
+        "from": "medica",
+        "to": "prometheus",
+        "resource": "pharmaceuticals",
+        "criticality": "high",
+        "source": "dependencies"
+      },
+      {
+        "from": "medica",
+        "to": "aquifer",
+        "resource": "sterilization_water",
+        "criticality": "medium",
+        "source": "dependencies"
+      },
+      {
+        "from": "medica",
+        "to": "zephyr",
+        "resource": "medical_oxygen",
+        "criticality": "high",
+        "source": "dependencies"
+      }
+    ],
+    "observed": [
+      {
+        "from": "vault",
+        "to": "aquifer",
+        "resource": "observed",
+        "edge_type": "observed",
+        "confidence": "medium",
+        "evidence": {
+          "pod": "vault",
+          "source": "comms",
+          "timestamp": "2094-02-10T11:20:00Z",
+          "trigger": "all water needs should be directed to",
+          "quote": "just a note for the records \u2014 water reserve system has been in maintenance reserve status since directive 2093-089. no active water backup capability at this time. all water needs..."
+        }
+      }
+    ],
+    "stale": [
+      {
+        "from": "prometheus",
+        "to": "aquifer",
+        "resource": "synthesis_water",
+        "confidence": "high",
+        "reason": "Synthesis water supply rerouted through Hydroponics irrigation circuit per pipe consolidation project 2093-P4. Previous direct Aquifer connection sealed. Water quality testing...",
+        "log_timestamp": "2093-09-30T16:00:00Z",
+        "evidence_pod": "prometheus"
+      }
+    ],
+    "dependency_concentration": [
+      {
+        "from": "zephyr",
+        "to": "aquifer",
+        "resource": "humidity_feedstock",
+        "note": "active dependency \u2014 backup/dual-feed removed, now single-source",
+        "reason": "Internal humidity reclamation loop retired. Atmospheric moisture budget now sourced entirely from Aquifer feedstock. Simplified maintenance schedule and reduced equipment overhead.",
+        "log_timestamp": "2093-06-20T12:00:00Z",
+        "evidence_pod": "zephyr"
+      },
+      {
+        "from": "terminus",
+        "to": "aquifer",
+        "resource": "slurry_water",
+        "note": "active dependency \u2014 backup/dual-feed removed, now single-source",
+        "reason": "Mining slurry processing rerouted from dual-feed configuration to single Aquifer loop per infrastructure simplification directive. Redundant plumbing decommissioned.",
+        "log_timestamp": "2093-05-11T09:30:00Z",
+        "evidence_pod": "terminus"
+      },
+      {
+        "from": "terminus",
+        "to": "aquifer",
+        "resource": "pump_components",
+        "note": "active dependency \u2014 backup/dual-feed removed, now single-source",
+        "reason": "Mining slurry processing rerouted from dual-feed configuration to single Aquifer loop per infrastructure simplification directive. Redundant plumbing decommissioned.",
+        "log_timestamp": "2093-05-11T09:30:00Z",
+        "evidence_pod": "terminus"
+      }
+    ],
+    "removed_backup_paths": [
+      {
+        "pod": "helios",
+        "note": "Backup coolant loop from Vault Reserve formally decommissioned per Directive 2094-011. Aquifer thermal regulation loop confirmed as primary cooling source for battery banks...",
+        "log_timestamp": "2094-02-14T07:00:00Z"
+      },
+      {
+        "pod": "vault",
+        "note": "just a note for the records \u2014 water reserve system has been in maintenance reserve status since directive 2093-089. no active water backup capability at this time. all water needs...",
+        "log_timestamp": "2094-02-10T11:20:00Z",
+        "source": "comms"
+      }
+    ],
+    "candidate_drift": [],
+    "mismatched": [
+      {
+        "from": "prometheus",
+        "to": "aquifer",
+        "issue": "prometheus lists aquifer as dependency but aquifer does not list prometheus in supplies",
+        "type": "dep_without_supply"
+      },
+      {
+        "from": "artemis",
+        "to": "sentinel",
+        "issue": "artemis lists sentinel in supplies but sentinel does not list artemis as dependency",
+        "type": "supply_without_dep"
+      },
+      {
+        "from": "artemis",
+        "to": "vault",
+        "issue": "artemis lists vault in supplies but vault does not list artemis as dependency",
+        "type": "supply_without_dep"
+      },
+      {
+        "from": "artemis",
+        "to": "forge",
+        "issue": "artemis lists forge in supplies but forge does not list artemis as dependency",
+        "type": "supply_without_dep"
+      },
+      {
+        "from": "artemis",
+        "to": "prometheus",
+        "issue": "artemis lists prometheus in supplies but prometheus does not list artemis as dependency",
+        "type": "supply_without_dep"
+      },
+      {
+        "from": "helios",
+        "to": "medica",
+        "issue": "helios lists medica in supplies but medica does not list helios as dependency",
+        "type": "supply_without_dep"
+      },
+      {
+        "from": "zephyr",
+        "to": "artemis",
+        "issue": "zephyr lists artemis in supplies but artemis does not list zephyr as dependency",
+        "type": "supply_without_dep"
+      },
+      {
+        "from": "vault",
+        "to": "artemis",
+        "issue": "vault lists artemis in supplies but artemis does not list vault as dependency",
+        "type": "supply_without_dep"
+      },
+      {
+        "from": "forge",
+        "to": "aquifer",
+        "issue": "forge lists aquifer in supplies but aquifer does not list forge as dependency",
+        "type": "supply_without_dep"
+      },
+      {
+        "from": "forge",
+        "to": "artemis",
+        "issue": "forge lists artemis in supplies but artemis does not list forge as dependency",
+        "type": "supply_without_dep"
+      },
+      {
+        "from": "forge",
+        "to": "terminus",
+        "issue": "forge lists terminus in supplies but terminus does not list forge as dependency",
+        "type": "supply_without_dep"
+      },
+      {
+        "from": "sentinel",
+        "to": "nexus",
+        "issue": "sentinel lists nexus in supplies but nexus does not list sentinel as dependency",
+        "type": "supply_without_dep"
+      },
+      {
+        "from": "sentinel",
+        "to": "artemis",
+        "issue": "sentinel lists artemis in supplies but artemis does not list sentinel as dependency",
+        "type": "supply_without_dep"
+      },
+      {
+        "from": "hydroponics",
+        "to": "artemis",
+        "issue": "hydroponics lists artemis in supplies but artemis does not list hydroponics as dependency",
+        "type": "supply_without_dep"
+      },
+      {
+        "from": "hydroponics",
+        "to": "medica",
+        "issue": "hydroponics lists medica in supplies but medica does not list hydroponics as dependency",
+        "type": "supply_without_dep"
+      },
+      {
+        "from": "nexus",
+        "to": "sentinel",
+        "issue": "nexus lists sentinel in supplies but sentinel does not list nexus as dependency",
+        "type": "supply_without_dep"
+      }
+    ]
+  },
+  "graph": {
+    "articulation_points": [
+      "helios"
+    ],
+    "cycles": [
+      [
+        "aquifer",
+        "helios",
+        "terminus"
+      ],
+      [
+        "aquifer",
+        "helios"
+      ],
+      [
+        "aquifer",
+        "terminus"
+      ],
+      [
+        "aquifer",
+        "terminus",
+        "helios"
+      ],
+      [
+        "terminus",
+        "helios"
+      ]
+    ],
+    "blast_radius_ranking": [
+      {
+        "pod": "aquifer",
+        "depth_1": [
+          "artemis",
+          "forge",
+          "helios",
+          "hydroponics",
+          "medica",
+          "prometheus",
+          "terminus",
+          "zephyr"
+        ],
+        "depth_2": [
+          "nexus",
+          "vault"
+        ],
+        "total_affected": 10
+      },
+      {
+        "pod": "helios",
+        "depth_1": [
+          "aquifer",
+          "artemis",
+          "forge",
+          "hydroponics",
+          "nexus",
+          "terminus",
+          "vault",
+          "zephyr"
+        ],
+        "depth_2": [
+          "medica",
+          "prometheus"
+        ],
+        "total_affected": 10
+      },
+      {
+        "pod": "terminus",
+        "depth_1": [
+          "aquifer",
+          "forge",
+          "helios"
+        ],
+        "depth_2": [
+          "artemis",
+          "hydroponics",
+          "medica",
+          "nexus",
+          "prometheus",
+          "vault",
+          "zephyr"
+        ],
+        "total_affected": 10
+      },
+      {
+        "pod": "zephyr",
+        "depth_1": [
+          "hydroponics",
+          "medica"
+        ],
+        "depth_2": [
+          "prometheus"
+        ],
+        "total_affected": 3
+      },
+      {
+        "pod": "hydroponics",
+        "depth_1": [
+          "prometheus"
+        ],
+        "depth_2": [
+          "medica"
+        ],
+        "total_affected": 2
+      },
+      {
+        "pod": "prometheus",
+        "depth_1": [
+          "medica"
+        ],
+        "depth_2": [],
+        "total_affected": 1
+      },
+      {
+        "pod": "nexus",
+        "depth_1": [
+          "artemis"
+        ],
+        "depth_2": [],
+        "total_affected": 1
+      },
+      {
+        "pod": "artemis",
+        "depth_1": [],
+        "depth_2": [],
+        "total_affected": 0
+      },
+      {
+        "pod": "vault",
+        "depth_1": [],
+        "depth_2": [],
+        "total_affected": 0
+      },
+      {
+        "pod": "forge",
+        "depth_1": [],
+        "depth_2": [],
+        "total_affected": 0
+      },
+      {
+        "pod": "sentinel",
+        "depth_1": [],
+        "depth_2": [],
+        "total_affected": 0
+      },
+      {
+        "pod": "medica",
+        "depth_1": [],
+        "depth_2": [],
+        "total_affected": 0
+      }
+    ]
+  },
+  "timeline": [
+    {
+      "date": "2092-08-22",
+      "pod": "terminus",
+      "event": "Shaft 3 operational. Extraction rate increased to 2,100 kg/day across three active shafts.",
+      "event_type": "commissioning",
+      "directive": null,
+      "matched_keywords": [
+        "increased"
+      ],
+      "source": "logs"
+    },
+    {
+      "date": "2092-10-15",
+      "pod": "artemis",
+      "event": "Directive 2092-042 issued: standardize inter-pod resource reporting formats. Compliance deadline: Q1 2093.",
+      "event_type": "directive",
+      "directive": "2092-042",
+      "matched_keywords": [
+        "directive",
+        "directive"
+      ],
+      "source": "logs"
+    },
+    {
+      "date": "2092-12-01",
+      "pod": "vault",
+      "event": "Annual reserve audit complete. Food stores at 90 days. Medical equipment inventory nominal. Water backup system operational.",
+      "event_type": "inventory",
+      "directive": null,
+      "matched_keywords": [
+        "backup"
+      ],
+      "source": "logs"
+    },
+    {
+      "date": "2093-03-15",
+      "pod": "vault",
+      "event": "Secondary water reserve system transferred to maintenance reserve status per Directive 2093-089. Capacity reallocated to support Sentinel Array expansion project. Aquifer Module...",
+      "event_type": "infrastructure_change",
+      "directive": "2093-089",
+      "matched_keywords": [
+        "reallocated",
+        "expansion",
+        "directive"
+      ],
+      "source": "logs"
+    },
+    {
+      "date": "2093-03-20",
+      "pod": "artemis",
+      "event": "Directive 2093-089 issued: reallocate Vault Reserve secondary water system budget to Sentinel Array expansion. Approved by Colony Director Liu. Effective immediately.",
+      "event_type": "directive",
+      "directive": "2093-089",
+      "matched_keywords": [
+        "expansion",
+        "directive",
+        "directive"
+      ],
+      "source": "logs"
+    },
+    {
+      "date": "2093-04-15",
+      "pod": "sentinel",
+      "event": "Independent solar array expanded per Directive 2093-089 budget reallocation. Power generation now 180 kW. Full operational independence from colony grid confirmed.",
+      "event_type": "expansion",
+      "directive": "2093-089",
+      "matched_keywords": [
+        "directive",
+        "directive"
+      ],
+      "source": "logs"
+    },
+    {
+      "date": "2093-04-22",
+      "pod": "aquifer",
+      "event": "Assumed distribution responsibility for sectors previously served by Vault Reserve secondary system. Throughput increased 18%. Operating within rated capacity.",
+      "event_type": "capacity_change",
+      "directive": null,
+      "matched_keywords": [
+        "increased",
+        "assumed"
+      ],
+      "source": "logs"
+    },
+    {
+      "date": "2093-05-11",
+      "pod": "terminus",
+      "event": "Mining slurry processing rerouted from dual-feed configuration to single Aquifer loop per infrastructure simplification directive. Redundant plumbing decommissioned.",
+      "event_type": "infrastructure_change",
+      "directive": null,
+      "matched_keywords": [
+        "decommission",
+        "rerouted",
+        "reroute"
+      ],
+      "source": "logs"
+    },
+    {
+      "date": "2093-07-08",
+      "pod": "helios",
+      "event": "Engineer rotation: Martinez transferred to Forge Works, replaced by Chen from Earth-side posting.",
+      "event_type": "personnel",
+      "directive": null,
+      "matched_keywords": [
+        "transferred",
+        "transferred"
+      ],
+      "source": "logs"
+    },
+    {
+      "date": "2093-09-30",
+      "pod": "prometheus",
+      "event": "Synthesis water supply rerouted through Hydroponics irrigation circuit per pipe consolidation project 2093-P4. Previous direct Aquifer connection sealed. Water quality testing...",
+      "event_type": "infrastructure_change",
+      "directive": null,
+      "matched_keywords": [
+        "sealed",
+        "rerouted",
+        "reroute"
+      ],
+      "source": "logs"
+    },
+    {
+      "date": "2093-10-01",
+      "pod": "aquifer",
+      "event": "Direct feed to Prometheus Lab decommissioned per pipe consolidation project 2093-P4. Prometheus synthesis water now routed through Hydroponics irrigation header. Net flow...",
+      "event_type": "infrastructure_change",
+      "directive": null,
+      "matched_keywords": [
+        "decommission"
+      ],
+      "source": "logs"
+    },
+    {
+      "date": "2094-01-02",
+      "pod": "artemis",
+      "event": "Directive 2094-011 issued: decommission Vault Reserve coolant distribution equipment. Transfer to Forge Works for repurposing.",
+      "event_type": "directive",
+      "directive": "2094-011",
+      "matched_keywords": [
+        "decommission",
+        "directive",
+        "directive"
+      ],
+      "source": "logs"
+    },
+    {
+      "date": "2094-01-05",
+      "pod": "vault",
+      "event": "Coolant distribution equipment formally transferred to Forge Works for repurposing per Directive 2094-011. Vault water-related infrastructure responsibilities concluded.",
+      "event_type": "infrastructure_change",
+      "directive": "2094-011",
+      "matched_keywords": [
+        "directive",
+        "directive",
+        "transferred"
+      ],
+      "source": "logs"
+    },
+    {
+      "date": "2094-01-18",
+      "pod": "artemis",
+      "event": "reminder: Q1 resource allocation submissions due by end of month. please use the updated forms per directive 2092-042. late submissions will be processed in the following cycle",
+      "event_type": "comms",
+      "directive": "2092-042",
+      "matched_keywords": [
+        "directive",
+        "directive"
+      ],
+      "source": "comms"
+    },
+    {
+      "date": "2094-02-10",
+      "pod": "vault",
+      "event": "just a note for the records \u2014 water reserve system has been in maintenance reserve status since directive 2093-089. no active water backup capability at this time. all water needs...",
+      "event_type": "comms",
+      "directive": "2093-089",
+      "matched_keywords": [
+        "backup",
+        "directive",
+        "directive"
+      ],
+      "source": "comms"
+    },
+    {
+      "date": "2094-02-14",
+      "pod": "helios",
+      "event": "Backup coolant loop from Vault Reserve formally decommissioned per Directive 2094-011. Aquifer thermal regulation loop confirmed as primary cooling source for battery banks...",
+      "event_type": "infrastructure_change",
+      "directive": "2094-011",
+      "matched_keywords": [
+        "decommission",
+        "backup",
+        "directive"
+      ],
+      "source": "logs"
+    },
+    {
+      "date": "2094-04-03",
+      "pod": "forge",
+      "event": "Sentinel Array mounting bracket fabrication initiated. Custom alloy specification from Artemis engineering directive.",
+      "event_type": "project",
+      "directive": null,
+      "matched_keywords": [
+        "directive",
+        "directive"
+      ],
+      "source": "logs"
+    },
+    {
+      "date": "2094-04-08",
+      "pod": "nexus",
+      "event": "Backup antenna array tested successfully. Failover time: 200ms. Meets mission-critical communication requirements.",
+      "event_type": "equipment",
+      "directive": null,
+      "matched_keywords": [
+        "backup"
+      ],
+      "source": "logs"
+    },
+    {
+      "date": "2094-04-25",
+      "pod": "artemis",
+      "event": "Colony population: 147 residents. Phase 3 expansion planning initiated. Preliminary site surveys underway.",
+      "event_type": "administrative",
+      "directive": null,
+      "matched_keywords": [
+        "expansion"
+      ],
+      "source": "logs"
+    },
+    {
+      "date": "2094-05-02",
+      "pod": "zephyr",
+      "event": "quick question \u2014 what's your current backup power capacity for our sector? we've got about 4 hours of reserve on our end before the processors would need to start cycling down...",
+      "event_type": "comms",
+      "directive": null,
+      "matched_keywords": [
+        "backup"
+      ],
+      "source": "comms"
+    },
+    {
+      "date": "2094-06-14",
+      "pod": "zephyr",
+      "event": "confirming medical O2 feed is running at full allocation. let us know if you need adjusted rates for the new patient ward expansion",
+      "event_type": "comms",
+      "directive": null,
+      "matched_keywords": [
+        "expansion"
+      ],
+      "source": "comms"
+    },
+    {
+      "date": "2094-07-02",
+      "pod": "artemis",
+      "event": "Phase 3 expansion survey team heading to the north rim this week. Sentinel providing overwatch. Please direct any logistical support requests through standard channels",
+      "event_type": "comms",
+      "directive": null,
+      "matched_keywords": [
+        "expansion"
+      ],
+      "source": "comms"
+    }
+  ]
+}
