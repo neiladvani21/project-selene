@@ -208,7 +208,7 @@ def build_observed_edges(pods_data: dict) -> list:
                 "source": source_type,
                 "timestamp": timestamp,
                 "trigger": trigger,
-                "quote": _truncate_quote(text, 180),
+                "quote": _truncate_quote(text, 200),
             },
         })
 
@@ -435,7 +435,7 @@ def find_stale_edges(declared_edges: list, pods_data: dict) -> dict:
                             "to": to_pod,
                             "resource": resource,
                             "confidence": "high",
-                            "reason": _truncate_quote(detail_raw, 180),
+                            "reason": _truncate_quote(detail_raw, 200),
                             "log_timestamp": entry.get("timestamp", ""),
                             "evidence_pod": from_pod,
                         })
@@ -452,7 +452,7 @@ def find_stale_edges(declared_edges: list, pods_data: dict) -> dict:
                                 "to": to_pod,
                                 "resource": resource,
                                 "note": "active dependency — backup/dual-feed removed, now single-source",
-                                "reason": _truncate_quote(detail_raw, 180),
+                                "reason": _truncate_quote(detail_raw, 200),
                                 "log_timestamp": entry.get("timestamp", ""),
                                 "evidence_pod": from_pod,
                             })
@@ -469,7 +469,7 @@ def find_stale_edges(declared_edges: list, pods_data: dict) -> dict:
                                     "to": to_pod,
                                     "resource": resource,
                                     "confidence": "candidate",
-                                    "reason": _truncate_quote(detail_raw, 180),
+                                    "reason": _truncate_quote(detail_raw, 200),
                                     "log_timestamp": entry.get("timestamp", ""),
                                     "evidence_pod": from_pod,
                                 })
@@ -490,7 +490,7 @@ def find_stale_edges(declared_edges: list, pods_data: dict) -> dict:
                         seen_backup.add(key)
                         removed_backup.append({
                             "pod": pod_id,
-                            "note": _truncate_quote(detail_raw, 180),
+                            "note": _truncate_quote(detail_raw, 200),
                             "log_timestamp": entry.get("timestamp", ""),
                         })
                     break
@@ -506,7 +506,7 @@ def find_stale_edges(declared_edges: list, pods_data: dict) -> dict:
                         seen_backup.add(key)
                         removed_backup.append({
                             "pod": pod_id,
-                            "note": _truncate_quote(text_raw, 180),
+                            "note": _truncate_quote(text_raw, 200),
                             "log_timestamp": entry.get("timestamp", ""),
                             "source": "comms",
                         })
@@ -891,7 +891,7 @@ def extract_timeline(pods_data: dict) -> list:
             timeline.append({
                 "date": entry.get("timestamp", "")[:10],
                 "pod": pod_id,
-                "event": _truncate_quote(text, 180),
+                "event": _truncate_quote(text, 200),
                 "event_type": "comms",
                 "directive": directive,
                 "matched_keywords": matched_keywords[:3],
