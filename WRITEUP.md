@@ -2,7 +2,7 @@
 
 **Neil Advani · Independent Infrastructure Resilience Assessment**
 
-A healthy status page is not the same thing as a resilient system.
+**A Healthy Status Page Is Not The Same Thing As A Resilient System.**
 
 ---
 
