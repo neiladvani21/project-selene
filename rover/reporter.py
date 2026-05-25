@@ -467,6 +467,76 @@ def build_agent_found_section(map_data: dict) -> str:
     )
 
 
+def detect_key_dependency_cycle(map_data: dict, top_pod_ids: list) -> dict | None:
+    """
+    Check whether the top-priority pods form a coupled dependency cycle.
+
+    Returns a structured dict if every pod in the top group has at least one
+    direct dependency edge to every other pod in the group (i.e., all pairs are
+    mutually connected in both directions via declared dependency edges).
+    Returns None if the cycle is incomplete or fewer than 3 pods are ranked.
+
+    Does not hardcode pod names — all logic is derived from computed rankings
+    and declared dependency edges in map.json.
+    """
+    if len(top_pod_ids) < 3:
+        return None
+
+    pods = top_pod_ids[:3]
+
+    dep_edges = [e for e in map_data.get("edges", {}).get("declared", [])
+                 if e.get("source") == "dependencies"]
+
+    # Index: (from, to) -> list of resources (there may be multiple edges per pair)
+    edge_index: dict[tuple, list[str]] = {}
+    for e in dep_edges:
+        key = (e["from"], e["to"])
+        edge_index.setdefault(key, []).append(e.get("resource", ""))
+
+    # For each ordered pair among the top pods, verify a direct edge exists
+    cycle_edges = []
+    for frm in pods:
+        for to_ in pods:
+            if frm == to_:
+                continue
+            resources = edge_index.get((frm, to_))
+            if not resources:
+                # No direct edge — cycle is not fully connected among these pods
+                return None
+            cycle_edges.append({"from": frm, "to": to_, "resource": resources[0]})
+
+    # Build per-pod dependency clause: which other top pods does each depend on?
+    deps_of: dict[str, list[str]] = {p: [] for p in pods}
+    for ce in cycle_edges:
+        deps_of[ce["from"]].append(ce["to"])
+
+    clauses = []
+    for pod in pods:
+        connected = deps_of[pod]
+        if len(connected) >= 2:
+            clause = (f"{pod.capitalize()} depends on "
+                      f"{connected[0].capitalize()} and {connected[1].capitalize()}")
+        elif len(connected) == 1:
+            clause = f"{pod.capitalize()} depends on {connected[0].capitalize()}"
+        else:
+            clause = f"{pod.capitalize()} has no direct dependencies in this group"
+        clauses.append(clause)
+
+    pod_names = ", ".join(p.capitalize() for p in pods[:-1])
+    last_name  = pods[-1].capitalize()
+    summary = (
+        f"{pod_names}, and {last_name} form a coupled dependency cycle: "
+        + ", ".join(clauses[:-1])
+        + f", and {clauses[-1]}."
+    )
+
+    return {
+        "cycle_pods": pods,
+        "edges": cycle_edges,
+        "summary": summary,
+    }
+
+
 def build_topology_note(map_data: dict, top3_pod_ids: list) -> str:
     """
     Deterministic 2-3 sentence topology description.
@@ -517,25 +587,8 @@ def build_topology_note(map_data: dict, top3_pod_ids: list) -> str:
         f"{'; '.join(conc_pair_strs)} — shown as solid edges."
     ) if conc_pair_strs else ""
 
-    # Cycle sentence: only emit if all three top pods share mutual dependency edges
-    # in the declared graph (i.e., each pair has at least one directed edge in each direction)
-    dep_pairs = {(e["from"], e["to"])
-                 for e in map_data.get("edges", {}).get("declared", [])
-                 if e.get("source") == "dependencies"}
-    cycle_sentence = ""
-    if len(top3_pod_ids) >= 3:
-        a, b, c = top3_pod_ids[0], top3_pod_ids[1], top3_pod_ids[2]
-        mutual_ab = (a, b) in dep_pairs and (b, a) in dep_pairs
-        mutual_ac = (a, c) in dep_pairs and (c, a) in dep_pairs
-        mutual_bc = (b, c) in dep_pairs and (c, b) in dep_pairs
-        if mutual_ab and mutual_ac and mutual_bc:
-            cycle_sentence = (
-                f"\n\n{a.capitalize()}, {b.capitalize()}, and {c.capitalize()} form a coupled "
-                f"dependency cycle: {a.capitalize()} depends on {b.capitalize()} and "
-                f"{c.capitalize()}, {b.capitalize()} depends on {a.capitalize()} and "
-                f"{c.capitalize()}, and {c.capitalize()} depends on {a.capitalize()} and "
-                f"{b.capitalize()}."
-            )
+    cycle_result = detect_key_dependency_cycle(map_data, top3_pod_ids)
+    cycle_sentence = f"\n\n{cycle_result['summary']}" if cycle_result else ""
 
     technical = (
         f"The topology shows {top_str} as the three hubs whose removal would directly "
@@ -549,6 +602,73 @@ def build_topology_note(map_data: dict, top3_pod_ids: list) -> str:
         "current dependencies remain active, but the safety nets around them have been removed."
     )
     return technical + "\n\n" + narrative + cycle_sentence
+
+
+def build_blast_radius_impact_table(map_data: dict) -> str:
+    """
+    Build a compact blast-radius impact table showing affected pod count and
+    downstream resident population for the top-5 pods by blast radius.
+
+    Convention: counts EXCLUDE the initiating failed pod (downstream-only,
+    matching the existing report convention).
+    Resident counts are summed from raw.info.population for affected pods only.
+    """
+    pods         = map_data.get("pods", {})
+    total_pods   = len(pods)
+    total_other  = total_pods - 1
+    blast_ranking = map_data.get("graph", {}).get("blast_radius_ranking", [])
+
+    pop: dict[str, int] = {}
+    missing_pop: list[str] = []
+    for pod_id, pod_data in pods.items():
+        val = pod_data.get("raw", {}).get("info", {}).get("population")
+        if val is not None:
+            try:
+                pop[pod_id] = int(val)
+            except (TypeError, ValueError):
+                pop[pod_id] = 0
+                missing_pop.append(pod_id)
+        else:
+            pop[pod_id] = 0
+            missing_pop.append(pod_id)
+
+    rows = []
+    for entry in blast_ranking[:5]:
+        pod_id       = entry["pod"]
+        total_aff    = entry.get("total_affected", 0)
+        depth_1      = entry.get("depth_1") or []
+        depth_2      = entry.get("depth_2") or []
+        affected_set = set(depth_1) | set(depth_2)
+
+        residents = sum(pop.get(p, 0) for p in affected_set)
+
+        # Build cascade list, cap at 8 names
+        cascade_pods = list(depth_1) + [p for p in depth_2 if p not in depth_1]
+        if len(cascade_pods) > 8:
+            cascade_str = ", ".join(p.capitalize() for p in cascade_pods[:8]) + "..."
+        else:
+            cascade_str = ", ".join(p.capitalize() for p in cascade_pods)
+
+        rows.append({
+            "pod":       pod_id,
+            "affected":  f"{total_aff} of {total_other}",
+            "residents": residents,
+            "cascades":  cascade_str,
+        })
+
+    header = (
+        "| Failed Pod | Other Pods Affected | Residents in Affected Pods | Cascades To |\n"
+        "|---|---:|---:|---|\n"
+    )
+    body = "\n".join(
+        f"| {r['pod'].capitalize()} | {r['affected']} | {r['residents']:,} residents | {r['cascades']} |"
+        for r in rows
+    )
+    note = "_Counts exclude the initiating failed pod and measure downstream blast radius only._"
+    if missing_pop:
+        note += f" Population data unavailable for: {', '.join(sorted(missing_pop))} (counted as 0)."
+
+    return f"### Blast Radius Impact\n\n{header}{body}\n\n{note}"
 
 
 def build_priority_table(map_data: dict) -> tuple[str, list[dict]]:
@@ -1773,9 +1893,9 @@ Rules:
 
 def assemble_report(map_data: dict, mermaid: str, exec_summary: str,
                     agent_found: str, topology_note: str, priority_table: str,
-                    finding_paragraphs: str, stress_signals: str,
-                    timeline_section: str, recommendations: str,
-                    llm_prose: dict) -> str:
+                    blast_impact_table: str, finding_paragraphs: str,
+                    stress_signals: str, timeline_section: str,
+                    recommendations: str, llm_prose: dict) -> str:
     """
     Stitch all deterministic sections and optional LLM addenda into final report.md.
     New section order:
@@ -1863,6 +1983,8 @@ In this graph, **A → B** means *A* depends on *B*. The diagram below shows the
 
 {priority_table}
 
+{blast_impact_table}
+
 {finding_paragraphs}
 
 {stress_signals_block}
@@ -1920,11 +2042,12 @@ def main():
     max_blast     = blast_ranking[0]["total_affected"] if blast_ranking else 0
 
     print("[reporter] building deterministic sections", flush=True)
-    exec_summary     = build_executive_summary(map_data, top3_pod_ids, max_blast)
-    agent_found      = build_agent_found_section(map_data)
-    topology_note    = build_topology_note(map_data, top3_pod_ids)
-    finding_paras    = build_finding_paragraphs(findings, map_data)
-    stress_signals   = build_stress_signals_section(map_data)
+    exec_summary       = build_executive_summary(map_data, top3_pod_ids, max_blast)
+    agent_found        = build_agent_found_section(map_data)
+    topology_note      = build_topology_note(map_data, top3_pod_ids)
+    blast_impact_table = build_blast_radius_impact_table(map_data)
+    finding_paras      = build_finding_paragraphs(findings, map_data)
+    stress_signals     = build_stress_signals_section(map_data)
     timeline_section = build_timeline_section(map_data)
     edges            = map_data.get("edges", {})
     recs             = build_recommendations(
@@ -1942,8 +2065,8 @@ def main():
     print("[reporter] assembling report", flush=True)
     report_content = assemble_report(
         map_data, mermaid, exec_summary, agent_found, topology_note,
-        priority_table, finding_paras, stress_signals, timeline_section,
-        recs, llm_prose,
+        priority_table, blast_impact_table, finding_paras, stress_signals,
+        timeline_section, recs, llm_prose,
     )
 
     os.makedirs(os.path.dirname(REPORT_PATH), exist_ok=True)

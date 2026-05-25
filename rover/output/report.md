@@ -82,6 +82,18 @@ Aquifer, Helios, and Terminus form a coupled dependency cycle: Aquifer depends o
 | 4 | Dependency model drift — 1 stale route, 3 concentrations, 2 removed backups | True stale routes (sealed/rerouted): prometheus → aquifer (synthesis_water). Active concentrations: 3 dependencies lost backup/dual-feed paths. Removed backups: 2 capability retirements documented. |
 | 5 | Status 'nominal' does not reflect resilience loss | 12 of 12 pods report nominal. Lowest trust score: aquifer at 60/100 (penalties: backup_systems = 0 in metadata; capacity utilization at 93.3% (above 85% threshold); dependency/supply mismatch (2 inconsistencies)). Pods with decommissioned backup loops still report nominal — the status field captures uptime only, not redundancy. |
 
+### Blast Radius Impact
+
+| Failed Pod | Other Pods Affected | Residents in Affected Pods | Cascades To |
+|---|---:|---:|---|
+| Aquifer | 10 of 11 | 114 residents | Artemis, Forge, Helios, Hydroponics, Medica, Prometheus, Terminus, Zephyr... |
+| Helios | 10 of 11 | 110 residents | Aquifer, Artemis, Forge, Hydroponics, Nexus, Terminus, Vault, Zephyr... |
+| Terminus | 10 of 11 | 113 residents | Aquifer, Forge, Helios, Artemis, Hydroponics, Medica, Nexus, Prometheus... |
+| Zephyr | 3 of 11 | 41 residents | Hydroponics, Medica, Prometheus |
+| Hydroponics | 2 of 11 | 27 residents | Prometheus, Medica |
+
+_Counts exclude the initiating failed pod and measure downstream blast radius only._
+
 **Finding 1 – Aquifer**
 
 Removing Aquifer from the graph would directly affect 8 pods (artemis, forge, helios, hydroponics, medica, prometheus, terminus, zephyr), and transitively 2 more (nexus, vault), totalling 10 of the 11 other pods.
