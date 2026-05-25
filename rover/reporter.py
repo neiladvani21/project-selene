@@ -645,7 +645,9 @@ def build_blast_radius_impact_table(map_data: dict) -> str:
         # Build cascade list, cap at 8 names
         cascade_pods = list(depth_1) + [p for p in depth_2 if p not in depth_1]
         if len(cascade_pods) > 8:
-            cascade_str = ", ".join(p.capitalize() for p in cascade_pods[:8]) + "..."
+            remainder = len(cascade_pods) - 8
+            cascade_str = (", ".join(p.capitalize() for p in cascade_pods[:8])
+                           + f" +{remainder} more")
         else:
             cascade_str = ", ".join(p.capitalize() for p in cascade_pods)
 
@@ -657,7 +659,7 @@ def build_blast_radius_impact_table(map_data: dict) -> str:
         })
 
     header = (
-        "| Failed Pod | Other Pods Affected | Residents in Affected Pods | Cascades To |\n"
+        "| Failed Pod | Other Pods Affected | Downstream Residents Affected | Cascades To |\n"
         "|---|---:|---:|---|\n"
     )
     body = "\n".join(

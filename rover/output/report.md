@@ -84,11 +84,11 @@ Aquifer, Helios, and Terminus form a coupled dependency cycle: Aquifer depends o
 
 ### Blast Radius Impact
 
-| Failed Pod | Other Pods Affected | Residents in Affected Pods | Cascades To |
+| Failed Pod | Other Pods Affected | Downstream Residents Affected | Cascades To |
 |---|---:|---:|---|
-| Aquifer | 10 of 11 | 114 residents | Artemis, Forge, Helios, Hydroponics, Medica, Prometheus, Terminus, Zephyr... |
-| Helios | 10 of 11 | 110 residents | Aquifer, Artemis, Forge, Hydroponics, Nexus, Terminus, Vault, Zephyr... |
-| Terminus | 10 of 11 | 113 residents | Aquifer, Forge, Helios, Artemis, Hydroponics, Medica, Nexus, Prometheus... |
+| Aquifer | 10 of 11 | 114 residents | Artemis, Forge, Helios, Hydroponics, Medica, Prometheus, Terminus, Zephyr +2 more |
+| Helios | 10 of 11 | 110 residents | Aquifer, Artemis, Forge, Hydroponics, Nexus, Terminus, Vault, Zephyr +2 more |
+| Terminus | 10 of 11 | 113 residents | Aquifer, Forge, Helios, Artemis, Hydroponics, Medica, Nexus, Prometheus +2 more |
 | Zephyr | 3 of 11 | 41 residents | Hydroponics, Medica, Prometheus |
 | Hydroponics | 2 of 11 | 27 residents | Prometheus, Medica |
 
