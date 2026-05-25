@@ -24,12 +24,12 @@ The hidden risk was that the declared dependency model does not distinguish thre
 
 ## 3. Colony Dependency Map
 
-In this graph, **A → B** means *A* depends on *B*. Dashed edges indicate stale or contradicted dependency records (routes that were removed or sealed). Concentration risks — active dependencies where backup paths were removed — remain as solid edges. Red nodes are articulation points or top blast-radius pods.
+In this graph, **A → B** means *A* depends on *B*. The diagram below shows the risk-relevant dependency paths. The complete discovered dependency graph is preserved in `map.json`. Dashed edges indicate stale routes or removed backup paths. Concentration risks — active dependencies where backup paths were removed — remain as solid edges. Red nodes are articulation points or top blast-radius pods.
 
 ```mermaid
 graph TD
     %% Arrow direction: A --> B means A depends on B
-    %% Dashed edges indicate stale or contradicted dependency records
+    %% Dashed edges: stale routes or removed backup paths
     %% Red nodes = articulation points or top-3 blast radius pods
     aquifer["Aquifer Module<br/>water/cooling hub"]
     artemis["Artemis Core<br/>command"]
@@ -37,9 +37,7 @@ graph TD
     helios["Helios Station<br/>power hub"]
     hydroponics["Hydroponics Bay<br/>food + water routing"]
     medica["Medica Ward<br/>medical care"]
-    nexus["Nexus Relay<br/>communications"]
     prometheus["Prometheus Lab<br/>pharma synthesis"]
-    sentinel["Sentinel Array<br/>monitoring"]
     terminus["Terminus Mine<br/>materials hub"]
     vault["Vault Reserve<br/>former reserves"]
     zephyr["Zephyr Hub<br/>oxygen/atmosphere"]
@@ -47,27 +45,20 @@ graph TD
     aquifer -->|pump_components| terminus
     prometheus -. stale .-> aquifer
     prometheus -->|observed synthesis_water| hydroponics
-    artemis -->|electrical_power| helios
-    artemis -->|data_routing| nexus
     artemis -->|potable_water| aquifer
     helios -->|silicon_feedstock| terminus
     helios -->|coolant_water| aquifer
-    zephyr -->|electrical_power| helios
     zephyr -->|humidity_feedstock| aquifer
-    vault -->|electrical_power| helios
     terminus -->|slurry_water| aquifer
     terminus -->|electrical_power| helios
     forge -->|raw_materials| terminus
-    forge -->|electrical_power| helios
-    forge -->|cooling_water| aquifer
     hydroponics -->|irrigation_water| aquifer
     hydroponics -->|co2_balance| zephyr
-    hydroponics -->|electrical_power| helios
-    nexus -->|electrical_power| helios
     medica -->|pharmaceuticals| prometheus
     medica -->|sterilization_water| aquifer
     medica -->|medical_oxygen| zephyr
     vault -->|observed| aquifer
+    vault -. removed backup .-> helios
     style aquifer fill:#ff4444,color:#fff
     style helios fill:#ff4444,color:#fff
     style terminus fill:#ff4444,color:#fff
@@ -76,6 +67,8 @@ graph TD
 The topology shows **Aquifer**, **Helios**, **Terminus** as the three hubs whose removal would directly or transitively impact 10 of the 11 other pods. Articulation points (whose removal disconnects the graph): **Helios**. 1 stale edge (dashed, declared route sealed/rerouted): prometheus → aquifer. Concentration risks (active dependencies that lost their backup feed): zephyr → aquifer (humidity_feedstock); terminus → aquifer (slurry_water); aquifer → terminus (pump_components) — shown as solid edges.
 
 The map shows why the colony can look healthy while still being fragile: current dependencies remain active, but the safety nets around them have been removed.
+
+Aquifer, Helios, and Terminus form a coupled dependency cycle: Aquifer depends on Helios and Terminus, Helios depends on Aquifer and Terminus, and Terminus depends on Aquifer and Helios.
 
 ---
 
@@ -143,6 +136,19 @@ All 12 pods claim nominal operation. The lowest trust score is Aquifer at 60/100
 
 Pods reporting nominal while having documented backup decommissions: Helios, Vault. The /status endpoint captures uptime only — not backup availability, not capacity margin, not dependency concentration. A pod can lose all redundancy and still report nominal until the moment it fails.
 
+
+---
+
+### Operational Stress Signals
+
+The graph shows where failure propagates; stress signals show where the remaining margin is already thin.
+
+- **Aquifer capacity pressure**: Aquifer metadata utilization is 93.3% and latest-log utilization is 91.6%, both above the 85% threshold, with zero backup systems.
+- **Helios material pressure**: Helios logs report silicon feedstock consumption at 140% of quarterly forecast, increasing dependence on Terminus.
+- **Medica oxygen reserve buffer**: Medica has only 6 hours of oxygen reserve, leaving little time margin after a Zephyr failure.
+- **Zephyr backup power buffer**: Zephyr has only 4 hours of backup power, leaving little time margin after a Helios failure.
+- **Hydroponics/Prometheus shared-route coupling**: Prometheus synthesis water runs through Hydroponics' secondary irrigation circuit using 15% of Hydroponics' Aquifer allocation; Hydroponics warns that an Aquifer throughput dip would affect both pods.
+
 ---
 
 ## 5. How Resilience Eroded
@@ -199,4 +205,4 @@ After the redundancy timeline, the trust table explains why /status is not enoug
 - Redefine the pod /status endpoint to incorporate resilience indicators: backup system count, capacity utilization threshold, stale declared dependencies, and removed redundancy. A pod should not be able to report 'nominal' while failing these checks.
 - Require all pods to publish machine-readable capacity data (throughput and rated figures). 9 pods currently publish no utilization data, making it impossible to detect saturation before it becomes a crisis.
 - Update the /status endpoint for Helios, Vault (and any pod with documented backup decommissions) to report a degraded resilience state rather than 'nominal'. Uptime alone is an insufficient health signal when redundancy has been retired.
-- Designate Aquifer, Helios, Terminus as Tier-1 targets for the next resilience review. Their computed blast radii produce the largest cascades in the colony. No new infrastructure should increase dependency on them before redundancy is restored.
+- No Phase 3 expansion should increase dependency on Aquifer, Helios, or Terminus until independent backup paths are restored. Their computed blast radii produce the largest cascades in the colony.

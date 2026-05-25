@@ -137,22 +137,33 @@ def _short_role(role: str) -> str:
 
 def build_mermaid(map_data: dict) -> str:
     """
-    Build Mermaid diagram where A --> B means A depends on B.
-    Only true stale edges are dashed. Observed and concentration edges are solid.
-    Red nodes = articulation points or top-3 blast-radius pods.
+    Build a risk-focused Mermaid diagram where A --> B means A depends on B.
+
+    Only edges that are risk-relevant are rendered:
+      - All stale edges (dashed)
+      - All observed edges
+      - All dependency-concentration edges
+      - Removed-backup-path context (dashed, from backup pod to primary)
+      - Declared edges where both the resource is critical AND at least one
+        endpoint is a top-blast-radius pod or articulation point
+      - Declared edges carrying critical downstream services regardless of pod
+    The complete graph remains in map.json.
     """
-    edges  = map_data.get("edges", {})
+    edges         = map_data.get("edges", {})
     dep_edges     = [e for e in edges.get("declared", []) if e.get("source") == "dependencies"]
     stale_edges   = edges.get("stale", [])
     observed_edges = edges.get("observed", [])
+    conc_edges    = edges.get("dependency_concentration", [])
+    backup_edges  = edges.get("removed_backup_paths", [])
 
     stale_pairs = {(s["from"], s["to"]) for s in stale_edges}
+    conc_pairs  = {(c["from"], c["to"]) for c in conc_edges}
 
-    graph = map_data.get("graph", {})
-    aps          = set(graph.get("articulation_points", []))
+    graph         = map_data.get("graph", {})
+    aps           = set(graph.get("articulation_points", []))
     blast_ranking = graph.get("blast_radius_ranking", [])
-    top3_blast   = {entry["pod"] for entry in blast_ranking[:3]}
-    high_risk    = aps | top3_blast
+    top3_blast    = {entry["pod"] for entry in blast_ranking[:3]}
+    high_risk     = aps | top3_blast
 
     pods  = map_data.get("pods", {})
     nodes = set(pods.keys())
@@ -164,12 +175,24 @@ def build_mermaid(map_data: dict) -> str:
         role = _short_role(info.get("role", ""))
         return f'{name}<br/>{role}' if role else name
 
-    # Build a mapping: (from, to) -> resource for stale edges, so we can find
-    # which declared edges are for the same pair as stale (synthesis_water reroute)
-    stale_resource = {(s["from"], s["to"]): s.get("resource", "") for s in stale_edges}
+    # Resources that are critical downstream services — include these edges regardless of pod
+    _CRITICAL_SERVICE_RESOURCES = {
+        "pharmaceuticals", "medical_oxygen", "co2_balance", "raw_materials",
+        "silicon_feedstock", "synthesis_water",
+    }
+    # Hub-coupling resources: only include if BOTH endpoints are high-risk pods or APs,
+    # or if the source is a high-risk pod (to capture outbound hub dependencies).
+    # Electrical power edges from non-hub pods are excluded to reduce clutter.
+    _HUB_COUPLING_RESOURCES = {
+        "electrical_power", "coolant_water", "cooling_water",
+    }
+    # Water/material flows from/to hubs — include if either endpoint is high-risk
+    _HUB_FLOW_RESOURCES = {
+        "potable_water", "sterilization_water", "irrigation_water",
+        "humidity_feedstock", "slurry_water", "pump_components",
+    }
 
-    # For observed edges whose (from, to) pair corresponds to a stale reroute,
-    # label with the stale resource to make the current path explicit.
+    # stale_rerouted_pairs: (stale_from, new_hub) -> stale_resource
     stale_rerouted_pairs: dict[tuple, str] = {}
     for s in stale_edges:
         reason_lower = s.get("reason", "").lower()
@@ -178,43 +201,87 @@ def build_mermaid(map_data: dict) -> str:
             new_hub = m.group(1)
             stale_rerouted_pairs[(s["from"], new_hub)] = s.get("resource", "")
 
-    lines = ["graph TD"]
-    lines.append("    %% Arrow direction: A --> B means A depends on B")
-    lines.append("    %% Dashed edges indicate stale or contradicted dependency records")
-    lines.append("    %% Red nodes = articulation points or top-3 blast radius pods")
+    # Determine which declared edges are risk-relevant:
+    # 1. Stale edges (always — dashed)
+    # 2. Concentration pairs (always)
+    # 3. Rerouted-path destination edges (observed label)
+    # 4. Critical downstream service resources (always — pharmaceuticals, medical_oxygen, etc.)
+    # 5. Hub-coupling resources: only if source OR both endpoints are high-risk
+    # 6. Hub water/material flows: only if either endpoint is high-risk
+    rerouted_dest_pairs = set(stale_rerouted_pairs.keys())
 
-    for node in sorted(nodes):
-        lines.append(f'    {node}["{_label(node)}"]')
+    def _is_risk_relevant(e: dict) -> bool:
+        pair  = (e["from"], e["to"])
+        frm   = e["from"]
+        to_   = e["to"]
+        res   = e.get("resource", "")
+        if pair in stale_pairs:
+            return True
+        if pair in conc_pairs:
+            return True
+        if pair in rerouted_dest_pairs:
+            return True
+        if res in _CRITICAL_SERVICE_RESOURCES:
+            return True
+        # Hub coupling (electrical_power, coolant): only include if source is a high-risk pod
+        # (hub depending on another hub for power/cooling) — excludes peripheral → hub power edges
+        if res in _HUB_COUPLING_RESOURCES:
+            return frm in high_risk
+        # Hub water/material flows: include if either endpoint is a high-risk pod
+        if res in _HUB_FLOW_RESOURCES:
+            return frm in high_risk or to_ in high_risk
+        return False
 
-    # Index observed edges by pair for fast lookup
+    risk_dep_edges = [e for e in dep_edges if _is_risk_relevant(e)]
+
+    # Index observed edges by pair
     observed_by_pair: dict[tuple, dict] = {}
     for e in observed_edges:
         observed_by_pair[(e["from"], e["to"])] = e
 
+    # Collect only nodes that appear in risk edges (plus observed/backup)
+    risk_nodes: set[str] = set()
+    for e in risk_dep_edges:
+        risk_nodes.update([e["from"], e["to"]])
+    for e in observed_edges:
+        risk_nodes.update([e["from"], e["to"]])
+    for e in backup_edges:
+        pod = e.get("pod")
+        # Parse the primary pod from the backup note — look for "from <pod>" pattern
+        note_lower = e.get("note", "").lower()
+        m = re.search(r'from\s+([a-z]+)\s+(?:reserve|module|station|works|hub|bay|ward|lab|core|relay|mine|array)', note_lower)
+        backup_source = m.group(1) if m else None
+        if pod:
+            risk_nodes.add(pod)
+        if backup_source and backup_source in nodes:
+            risk_nodes.add(backup_source)
+
+    lines = ["graph TD"]
+    lines.append("    %% Arrow direction: A --> B means A depends on B")
+    lines.append("    %% Dashed edges: stale routes or removed backup paths")
+    lines.append("    %% Red nodes = articulation points or top-3 blast radius pods")
+
+    for node in sorted(risk_nodes):
+        if node in nodes:
+            lines.append(f'    {node}["{_label(node)}"]')
+
     seen_pairs: set[tuple] = set()
 
-    for e in dep_edges:
+    for e in risk_dep_edges:
         pair = (e["from"], e["to"])
         if pair in seen_pairs:
             continue
         seen_pairs.add(pair)
 
         if pair in stale_pairs:
-            # Stale declared edge — render dashed
             lines.append(f'    {e["from"]} -. stale .-> {e["to"]}')
         elif pair in observed_by_pair:
-            # Both declared and observed exist for this pair — prefer observed label.
             obs = observed_by_pair[pair]
             rerouted_res = stale_rerouted_pairs.get(pair)
-            if rerouted_res:
-                label_str = f"observed {rerouted_res}"
-            else:
-                obs_res = obs.get("resource", "")
-                label_str = obs_res if obs_res and obs_res != "observed" else "observed"
+            label_str = (f"observed {rerouted_res}" if rerouted_res
+                         else (obs.get("resource", "") or "observed"))
             lines.append(f'    {e["from"]} -->|{label_str}| {e["to"]}')
         elif pair in stale_rerouted_pairs:
-            # This declared edge is the current rerouted path for a stale route —
-            # label it as observed so the diagram shows the live topology, not the old resource.
             label_str = f"observed {stale_rerouted_pairs[pair]}"
             lines.append(f'    {e["from"]} -->|{label_str}| {e["to"]}')
         else:
@@ -222,21 +289,31 @@ def build_mermaid(map_data: dict) -> str:
             label    = f"|{resource}|" if resource else ""
             lines.append(f'    {e["from"]} -->{label} {e["to"]}')
 
+    # Observed-only edges (not already rendered via declared loop)
     for e in observed_edges:
         pair = (e["from"], e["to"])
         if pair in seen_pairs:
-            continue  # already rendered above via the declared-edge loop
+            continue
         seen_pairs.add(pair)
         rerouted_res = stale_rerouted_pairs.get(pair)
-        if rerouted_res:
-            label_str = f"observed {rerouted_res}"
-        else:
-            resource = e.get("resource", "")
-            label_str = resource if resource and resource != "observed" else "observed"
+        label_str = (f"observed {rerouted_res}" if rerouted_res
+                     else (e.get("resource", "") or "observed"))
         lines.append(f'    {e["from"]} -->|{label_str}| {e["to"]}')
 
+    # Removed-backup-path context: dashed edge from backup source -> primary pod
+    for e in backup_edges:
+        pod = e.get("pod")
+        note_lower = e.get("note", "").lower()
+        m = re.search(r'from\s+([a-z]+)\s+(?:reserve|module|station|works|hub|bay|ward|lab|core|relay|mine|array)', note_lower)
+        backup_source = m.group(1) if m else None
+        if pod and backup_source and backup_source in nodes and backup_source != pod:
+            pair = (backup_source, pod)
+            if pair not in seen_pairs:
+                seen_pairs.add(pair)
+                lines.append(f'    {backup_source} -. removed backup .-> {pod}')
+
     for node in sorted(high_risk):
-        if node in nodes:
+        if node in risk_nodes and node in nodes:
             lines.append(f'    style {node} fill:#ff4444,color:#fff')
 
     return "\n".join(lines)
@@ -440,6 +517,26 @@ def build_topology_note(map_data: dict, top3_pod_ids: list) -> str:
         f"{'; '.join(conc_pair_strs)} — shown as solid edges."
     ) if conc_pair_strs else ""
 
+    # Cycle sentence: only emit if all three top pods share mutual dependency edges
+    # in the declared graph (i.e., each pair has at least one directed edge in each direction)
+    dep_pairs = {(e["from"], e["to"])
+                 for e in map_data.get("edges", {}).get("declared", [])
+                 if e.get("source") == "dependencies"}
+    cycle_sentence = ""
+    if len(top3_pod_ids) >= 3:
+        a, b, c = top3_pod_ids[0], top3_pod_ids[1], top3_pod_ids[2]
+        mutual_ab = (a, b) in dep_pairs and (b, a) in dep_pairs
+        mutual_ac = (a, c) in dep_pairs and (c, a) in dep_pairs
+        mutual_bc = (b, c) in dep_pairs and (c, b) in dep_pairs
+        if mutual_ab and mutual_ac and mutual_bc:
+            cycle_sentence = (
+                f"\n\n{a.capitalize()}, {b.capitalize()}, and {c.capitalize()} form a coupled "
+                f"dependency cycle: {a.capitalize()} depends on {b.capitalize()} and "
+                f"{c.capitalize()}, {b.capitalize()} depends on {a.capitalize()} and "
+                f"{c.capitalize()}, and {c.capitalize()} depends on {a.capitalize()} and "
+                f"{b.capitalize()}."
+            )
+
     technical = (
         f"The topology shows {top_str} as the three hubs whose removal would directly "
         f"or transitively impact {blast_phrase}. "
@@ -451,7 +548,7 @@ def build_topology_note(map_data: dict, top3_pod_ids: list) -> str:
         "The map shows why the colony can look healthy while still being fragile: "
         "current dependencies remain active, but the safety nets around them have been removed."
     )
-    return technical + "\n\n" + narrative
+    return technical + "\n\n" + narrative + cycle_sentence
 
 
 def build_priority_table(map_data: dict) -> tuple[str, list[dict]]:
@@ -886,6 +983,494 @@ def build_finding_paragraphs(findings: list, map_data: dict) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Operational stress signals — deterministic extraction from map.json
+# ---------------------------------------------------------------------------
+
+# Phrases that indicate forecast/load stress in logs
+_FORECAST_STRESS_PATTERNS = [
+    r'\d+\s*%\s*of\s*(quarterly\s*)?forecast',
+    r'above\s*(quarterly\s*)?forecast',
+    r'consumed at \d+%',
+]
+
+# Phrases indicating shared-route / capacity-coupling in comms or logs
+_SHARED_ROUTE_PATTERNS = [
+    r'shared\s+(line|circuit|allocation)',
+    r'secondary\s+circuit',
+    r'if\s+throughput\s+dips',
+    r"we.d both feel",
+    r'pulling\s+\d+\s*%\s+of\s+(our|their|your)?\s*allocation',
+    r'\d+\s*%\s+of\s+(our|their|your)?\s*(aquifer\s*)?allocation',
+    r'synthesis water.{0,30}(through|via|uses)',
+    r'running through\s+our\s+\w+\s+circuit',
+]
+
+# Metadata keys indicating buffer/reserve windows
+_BUFFER_META_KEYS = [
+    ("backup_power_hours",    "hours",  6,   "low backup power buffer"),
+    ("oxygen_reserve_hours",  "hours",  8,   "short oxygen reserve"),
+    ("pharmacy_stock_days",   "days",   14,  "limited pharmaceutical stock"),
+    ("independent_power_days","days",   7,   "limited independent power"),
+    ("emergency_ration_days", "days",   30,  "low emergency rations"),
+]
+
+# Resources that, if depended upon, constitute critical service coupling
+_CRITICAL_RESOURCES = {
+    "pharmaceuticals":    "medical continuity",
+    "medical_oxygen":     "life support",
+    "sterilization_water":"surgical operations",
+    "coolant_water":      "thermal regulation",
+    "irrigation_water":   "food production",
+}
+
+
+def extract_operational_stress_signals(map_data: dict) -> list:
+    """
+    Scan map.json for operational stress signals. Returns a list of signal dicts.
+    All signals are evidence-backed from map.json — nothing hardcoded by pod name.
+    """
+    signals = []
+    pods  = map_data.get("pods", {})
+    edges = map_data.get("edges", {})
+    dep_edges = [e for e in edges.get("declared", []) if e.get("source") == "dependencies"]
+
+    for pod_id, pod in pods.items():
+        raw  = pod.get("raw", {})
+        meta = (raw.get("info") or {}).get("metadata", {}) or {}
+        cap  = pod.get("derived", {}).get("capacity", {}) or {}
+
+        # A. Forecast/load stress — scan logs
+        for entry in (raw.get("logs") or []):
+            detail = entry.get("detail", "") or ""
+            for pat in _FORECAST_STRESS_PATTERNS:
+                m = re.search(pat, detail, re.IGNORECASE)
+                if m:
+                    # Extract the percentage value if present
+                    pct_m = re.search(r'(\d+)\s*%', detail)
+                    val   = int(pct_m.group(1)) if pct_m else None
+                    sev   = "high" if (val and val >= 130) else "medium"
+                    resource_m = re.search(
+                        r'(silicon|water|power|coolant|oxygen|fuel|feedstock)\s*(feedstock|supply|output)?',
+                        detail, re.IGNORECASE)
+                    resource_label = resource_m.group(0).strip().lower() if resource_m else "material"
+                    signals.append({
+                        "pod": pod_id,
+                        "signal_type": "forecast_stress",
+                        "severity": sev,
+                        "value": f"{val}% of forecast" if val else None,
+                        "timestamp": entry.get("timestamp", "")[:10] or None,
+                        "evidence": clean_quote(detail, max_len=160),
+                        "why_it_matters": (
+                            f"{pod_id.capitalize()} {resource_label} consumption is above forecast, "
+                            f"increasing dependence on its upstream suppliers."
+                        ),
+                    })
+                    break  # one signal per log entry
+
+        # B. Short buffer/reserve windows — scan metadata
+        for key, unit, threshold, label in _BUFFER_META_KEYS:
+            val = meta.get(key)
+            if val is None:
+                continue
+            try:
+                val_num = float(val)
+            except (TypeError, ValueError):
+                continue
+            sev = "high" if val_num <= threshold / 2 else "medium" if val_num <= threshold else "low"
+            if sev in ("high", "medium"):
+                signals.append({
+                    "pod": pod_id,
+                    "signal_type": "low_buffer",
+                    "severity": sev,
+                    "value": f"{val_num:g} {unit}",
+                    "timestamp": None,
+                    "evidence": f"metadata.{key} = {val_num:g}",
+                    "why_it_matters": (
+                        f"{pod_id.capitalize()} has {label} ({val_num:g} {unit}), "
+                        f"leaving little time margin after an upstream failure."
+                    ),
+                })
+
+        # C. High utilization pressure — from derived capacity
+        meta_util = cap.get("metadata_utilization_pct")
+        log_util  = cap.get("latest_log_utilization_pct")
+        backup_val = meta.get("backup_systems")
+        for util_val, src in [(meta_util, "metadata"), (log_util, "latest log")]:
+            if util_val is not None and util_val > 85:
+                sev = "high" if (util_val > 90 and backup_val == 0) else "medium"
+                signals.append({
+                    "pod": pod_id,
+                    "signal_type": "high_utilization",
+                    "severity": sev,
+                    "value": f"{util_val:.1f}%",
+                    "timestamp": cap.get("latest_log_timestamp", "")[:10] or None,
+                    "evidence": f"capacity.{src.replace(' ', '_')}_utilization_pct = {util_val:.1f}",
+                    "why_it_matters": (
+                        f"{pod_id.capitalize()} {src} utilization is {util_val:.1f}%, "
+                        f"above the 85% safe threshold"
+                        + (" with zero backup systems." if backup_val == 0 else ".")
+                    ),
+                })
+            break  # report once per pod (metadata takes priority)
+
+        # D. Shared-route / capacity-coupling stress.
+        #    Collect all matching comms/logs, score by risk specificity, keep highest scorer.
+        #    Score +1 for each risk-specific keyword; -1 for each reassurance keyword.
+        #    Decommission/timeline log entries are excluded (they belong to the timeline section).
+        _DECOMMISSION_SKIP = re.compile(
+            r'decommission|sealed|rerouted|pipe consolidation|directive', re.IGNORECASE)
+        _RISK_KEYWORDS     = ("allocation", "pulling", "dips", "same day", "% of", "secondary circuit",
+                              "shared line", "shared circuit", "shared allocation", "throughput")
+        _REASSURE_KEYWORDS = ("stable", "no issues", "no problem", "all good", "working fine",
+                              "within capacity", "within rated")
+
+        candidates: list[tuple[int, dict]] = []
+        for entries, field in [
+            (raw.get("comms") or [], "content"),
+            (raw.get("logs")  or [], "detail"),
+        ]:
+            for entry in entries:
+                text = (entry.get(field, "") or "") if isinstance(entry, dict) else str(entry)
+                if field == "detail" and _DECOMMISSION_SKIP.search(text):
+                    continue
+                if not any(re.search(pat, text, re.IGNORECASE) for pat in _SHARED_ROUTE_PATTERNS):
+                    continue
+                text_lower = text.lower()
+                score = (sum(1 for kw in _RISK_KEYWORDS    if kw in text_lower)
+                       - sum(1 for kw in _REASSURE_KEYWORDS if kw in text_lower))
+                candidates.append((score, {
+                    "pod": pod_id,
+                    "signal_type": "shared_route",
+                    "severity": "medium",
+                    "value": None,
+                    "timestamp": entry.get("timestamp", "")[:10] if isinstance(entry, dict) else None,
+                    "evidence": clean_quote(text, max_len=200),
+                    "why_it_matters": (
+                        f"{pod_id.capitalize()} shares a route or allocation with another pod, "
+                        f"meaning a throughput drop would affect both simultaneously."
+                    ),
+                }))
+        if candidates:
+            candidates.sort(key=lambda x: x[0], reverse=True)
+            signals.append(candidates[0][1])
+
+        # E. Critical downstream service coupling — declared dependency edges
+        pod_critical = []
+        for e in dep_edges:
+            if e["from"] == pod_id and e.get("resource") in _CRITICAL_RESOURCES:
+                pod_critical.append((e["to"], e["resource"], _CRITICAL_RESOURCES[e["resource"]]))
+        if pod_critical:
+            dep_strs = "; ".join(
+                f"depends on {to_.capitalize()} for {res} ({meaning})"
+                for to_, res, meaning in pod_critical
+            )
+            signals.append({
+                "pod": pod_id,
+                "signal_type": "critical_service_coupling",
+                "severity": "medium",
+                "value": None,
+                "timestamp": None,
+                "evidence": dep_strs,
+                "why_it_matters": (
+                    f"{pod_id.capitalize()} has critical service dependencies: {dep_strs}."
+                ),
+            })
+
+    # Deduplicate: for high-util, keep only the first (highest severity) per pod per type
+    seen: set = set()
+    deduped = []
+    for s in signals:
+        key = (s["pod"], s["signal_type"])
+        if key not in seen:
+            seen.add(key)
+            deduped.append(s)
+
+    # Sort: high first, then medium, then low; within severity, type order ensures
+    # actionable signals (forecast, buffer, utilization) rank above coupling notes.
+    sev_order  = {"high": 0, "medium": 1, "low": 2}
+    type_order = {
+        "forecast_stress":          0,
+        "low_buffer":               1,
+        "high_utilization":         2,
+        "shared_route":             3,
+        "critical_service_coupling":4,
+    }
+    deduped.sort(key=lambda s: (
+        sev_order.get(s["severity"], 9),
+        type_order.get(s["signal_type"], 9),
+        s["pod"],
+    ))
+    return deduped
+
+
+def _render_stress_bullet(s: dict, map_data: dict) -> str:
+    """
+    Render a single stress signal bullet with evidence-specific wording.
+    All values come from the signal dict (which was built from map.json).
+    """
+    pod_id  = s["pod"]
+    pod_cap = pod_id.capitalize()
+    sig_type = s["signal_type"]
+    cap = map_data.get("pods", {}).get(pod_id, {}).get("derived", {}).get("capacity", {}) or {}
+    meta = (map_data.get("pods", {}).get(pod_id, {}).get("raw", {}).get("info") or {}).get("metadata", {}) or {}
+    dep_edges = [e for e in map_data.get("edges", {}).get("declared", [])
+                 if e.get("source") == "dependencies"]
+
+    if sig_type == "forecast_stress":
+        # Extract percentage and upstream supplier from evidence text
+        evidence = s.get("evidence", "")
+        pct_m  = re.search(r'(\d+)\s*%\s+of\s+(?:quarterly\s+)?forecast', evidence, re.IGNORECASE)
+        pct_str = pct_m.group(0) if pct_m else s.get("value", "above forecast")
+        # Find the resource being consumed
+        res_m = re.search(r'(silicon\s*feedstock|feedstock|water|coolant|oxygen|fuel)',
+                          evidence, re.IGNORECASE)
+        res_str = res_m.group(0).strip().lower() if res_m else "material"
+        # Find upstream supplier mentioned in the evidence
+        supplier_m = re.search(r'from\s+([A-Za-z]+)\b', evidence, re.IGNORECASE)
+        supplier = supplier_m.group(1).capitalize() if supplier_m else None
+        # Fall back: find pods this pod depends on for the relevant resource
+        if not supplier:
+            for e in dep_edges:
+                if e["from"] == pod_id and res_str in e.get("resource", ""):
+                    supplier = e["to"].capitalize()
+                    break
+        supplier_clause = f", increasing dependence on {supplier}" if supplier else ""
+        return (f"**{pod_cap} material pressure**: "
+                f"{pod_cap} logs report {res_str} consumption at {pct_str}{supplier_clause}.")
+
+    elif sig_type == "high_utilization":
+        meta_util = cap.get("metadata_utilization_pct")
+        log_util  = cap.get("latest_log_utilization_pct")
+        backup_val = meta.get("backup_systems")
+        parts = []
+        if meta_util is not None:
+            parts.append(f"metadata utilization is {meta_util:.1f}%")
+        if log_util is not None:
+            parts.append(f"latest-log utilization is {log_util:.1f}%")
+        util_clause = " and ".join(parts)
+        threshold_clause = ", both above the 85% threshold" if len(parts) == 2 else ", above the 85% threshold"
+        backup_clause = ", with zero backup systems" if backup_val == 0 else ""
+        return (f"**{pod_cap} capacity pressure**: "
+                f"{pod_cap} {util_clause}{threshold_clause}{backup_clause}.")
+
+    elif sig_type == "low_buffer":
+        val_str = s.get("value", "")
+        key     = s.get("evidence", "").split("=")[0].strip().replace("metadata.", "")
+        key_to_resource = {
+            "backup_power_hours":    "electrical_power",
+            "oxygen_reserve_hours":  "medical_oxygen",
+            "pharmacy_stock_days":   "pharmaceuticals",
+            "independent_power_days":"electrical_power",
+        }
+        # Human-readable label for the type of reserve
+        key_to_label = {
+            "backup_power_hours":    "backup power",
+            "oxygen_reserve_hours":  "oxygen reserve",
+            "pharmacy_stock_days":   "pharmaceutical stock",
+            "independent_power_days":"independent power",
+            "emergency_ration_days": "emergency rations",
+        }
+        reserve_label   = key_to_label.get(key, "reserve")
+        upstream_resource = key_to_resource.get(key)
+        upstream = None
+        if upstream_resource:
+            for e in dep_edges:
+                if e["from"] == pod_id and e.get("resource") == upstream_resource:
+                    upstream = e["to"].capitalize()
+                    break
+        upstream_clause = f" after a {upstream} failure" if upstream else " after an upstream failure"
+        bullet_label = f"**{pod_cap} {reserve_label} buffer**"
+        return (f"{bullet_label}: "
+                f"{pod_cap} has only {val_str} of {reserve_label}, "
+                f"leaving little time margin{upstream_clause}.")
+
+    elif sig_type == "critical_service_coupling":
+        critical_deps = [
+            (e["to"], e["resource"])
+            for e in dep_edges
+            if e["from"] == pod_id and e.get("resource") in _CRITICAL_RESOURCES
+        ]
+        if not critical_deps:
+            return f"**{pod_cap} service coupling**: {s.get('why_it_matters', '')}"
+
+        # Build a chain for each critical dep: dep → dep's upstream hub
+        # Only follow "water", "power", or synthesis-related resources
+        CHAIN_RESOURCES = {"electrical_power", "irrigation_water", "synthesis_water",
+                           "nutrient_compounds", "coolant_water", "humidity_feedstock"}
+        dep_clauses = []
+        chain_paths = []
+        for to_, res in critical_deps:
+            dep_clauses.append(f"{to_.capitalize()} {res.replace('_', ' ')}")
+            # Trace one hop upstream from to_
+            hops = [e["to"] for e in dep_edges
+                    if e["from"] == to_ and e.get("resource") in CHAIN_RESOURCES]
+            if hops:
+                path = " → ".join([to_.capitalize()] + [h.capitalize() for h in hops[:2]])
+                chain_paths.append(path)
+
+        meanings = list(dict.fromkeys(_CRITICAL_RESOURCES[res] for _, res in critical_deps))
+        meaning_str = " and ".join(meanings)
+        dep_str = " and ".join(dep_clauses)
+
+        if chain_paths:
+            chain_str = (
+                " linking " + meaning_str + " to the "
+                + " and the ".join(f"{p} path" for p in chain_paths[:2]) + "."
+            )
+        else:
+            chain_str = f" linking {meaning_str} to upstream dependency paths."
+
+        return (f"**{pod_cap} service coupling**: "
+                f"{pod_cap} depends on {dep_str},{chain_str}")
+
+    elif sig_type == "shared_route":
+        evidence = s.get("evidence", "")
+        # Try to extract allocation percentage — capture only the number, normalize pronouns
+        pct_m = re.search(r'(\d+)\s*%\s+of\s+(?:our|their|your)?\s*(\w+)\s*allocation', evidence, re.IGNORECASE)
+        pct_num = pct_m.group(1) if pct_m else None  # just the digit(s)
+        # Extract "if throughput dips … both feel it" clause
+        dip_m = re.search(r'if\s+\w+\s+throughput\s+dips', evidence, re.IGNORECASE)
+        has_dip_warning = dip_m is not None
+        # Find shared upstream: pod's dep edges for the relevant resource
+        shared_upstream = None
+        for e in dep_edges:
+            if e["from"] == pod_id and e.get("resource") in ("irrigation_water", "electrical_power",
+                                                               "coolant_water", "synthesis_water"):
+                shared_upstream = e["to"].capitalize()
+                break
+        # Possessive: names ending in 's' use just apostrophe
+        pod_possessive = f"{pod_cap}'" if pod_cap.endswith("s") else f"{pod_cap}'s"
+        # Try to find the other pod sharing the route from stale edges
+        other_pod = None
+        for se in map_data.get("edges", {}).get("stale", []):
+            reason_lower = se.get("reason", "").lower()
+            m = re.search(r'rerouted?\s+through\s+([a-z]+)', reason_lower)
+            if m and m.group(1) == pod_id.lower():
+                other_pod = se["from"].capitalize()
+                break
+        label_parts = [pod_cap]
+        if other_pod:
+            label_parts.append(other_pod)
+        label = "/".join(label_parts) + " shared-route coupling"
+        if has_dip_warning and pct_num:
+            upstream_ref = shared_upstream if shared_upstream else "upstream"
+            # Build normalized allocation phrase: "15% of Hydroponics' Aquifer allocation"
+            alloc_phrase = f"{pct_num}% of {pod_possessive} {upstream_ref} allocation"
+            return (f"**{label}**: "
+                    f"{other_pod + ' synthesis water runs through' if other_pod else 'Synthesis water runs through'} "
+                    f"{pod_possessive} secondary irrigation circuit "
+                    f"using {alloc_phrase}; {pod_cap} warns that "
+                    f"an {upstream_ref} throughput dip would affect both pods.")
+        elif has_dip_warning:
+            return (f"**{label}**: "
+                    f"{pod_cap} shares a circuit with another pod; warns that "
+                    f"an upstream throughput dip would affect both pods.")
+        else:
+            return (f"**{label}**: "
+                    f"{pod_cap} shares a circuit{f' via {shared_upstream}' if shared_upstream else ''}. "
+                    f"Evidence: \"{clean_quote(evidence, max_len=140)}\"")
+
+    else:
+        return f"**{pod_cap}**: {s.get('why_it_matters', s.get('evidence', ''))}"
+
+
+def build_stress_signals_section(map_data: dict) -> str:
+    """
+    Render the Operational Stress Signals subsection as compact bullets.
+    Only includes signals with real map.json evidence. Maximum 5 bullets.
+    Priority order: high_utilization > forecast_stress > low_buffer > critical_service_coupling > shared_route
+    """
+    signals = extract_operational_stress_signals(map_data)
+    if not signals:
+        return ""
+
+    # Build top-5 list: one per signal type in priority order, but:
+    # - prefer shared_route signals that have a dip/allocation clause (more specific)
+    # - skip critical_service_coupling if same pod already has a higher-priority signal
+    PRIORITY_TYPES = [
+        "high_utilization",
+        "forecast_stress",
+        "low_buffer",
+        "critical_service_coupling",
+        "shared_route",
+    ]
+
+    # Collect slots: one per type, except low_buffer which allows up to 2
+    # (different pods, different operational services).
+    by_type: dict  = {}
+    low_buffers: list = []
+
+    # Map metadata buffer keys to service labels for dedup check
+    _BUFFER_KEY_SERVICE = {
+        "backup_power_hours":    "power",
+        "oxygen_reserve_hours":  "atmosphere",
+        "pharmacy_stock_days":   "medical",
+        "independent_power_days":"power",
+        "emergency_ration_days": "food",
+    }
+
+    for s in signals:
+        t = s["signal_type"]
+        if t == "low_buffer":
+            # Extract the service type from the evidence field ("metadata.X = N")
+            key_m = re.search(r'metadata\.(\w+)\s*=', s.get("evidence", ""))
+            svc   = _BUFFER_KEY_SERVICE.get(key_m.group(1) if key_m else "", "other")
+            # Allow if from a different pod AND represents a different service
+            if (len(low_buffers) < 2
+                    and not any(lb["pod"] == s["pod"] for lb in low_buffers)
+                    and not any(lb.get("_svc") == svc for lb in low_buffers)):
+                s["_svc"] = svc
+                low_buffers.append(s)
+        elif t == "shared_route":
+            ev = s.get("evidence", "").lower()
+            has_specific = any(kw in ev for kw in ("dips", "allocation", "pulling", "same day"))
+            existing_ev  = by_type.get(t, {}).get("evidence", "").lower()
+            existing_specific = any(kw in existing_ev for kw in ("dips", "allocation", "pulling", "same day"))
+            if t not in by_type or (has_specific and not existing_specific):
+                by_type[t] = s
+        elif t not in by_type:
+            by_type[t] = s
+
+    # Avoid repeating a pod in the critical_service_coupling slot
+    already_represented = (
+        {by_type[t]["pod"] for t in ("high_utilization", "forecast_stress", "shared_route") if t in by_type}
+        | {lb["pod"] for lb in low_buffers}
+    )
+    if "critical_service_coupling" in by_type:
+        if by_type["critical_service_coupling"]["pod"] in already_represented:
+            alt = next((s for s in signals
+                        if s["signal_type"] == "critical_service_coupling"
+                        and s["pod"] not in already_represented), None)
+            if alt:
+                by_type["critical_service_coupling"] = alt
+            else:
+                del by_type["critical_service_coupling"]
+
+    # Assemble final list in priority order, capped at 5
+    ordered: list = []
+    for t in PRIORITY_TYPES:
+        if t == "low_buffer":
+            ordered.extend(low_buffers)
+        elif t in by_type:
+            ordered.append(by_type[t])
+
+    top = ordered[:5]
+
+    lines = [
+        "### Operational Stress Signals",
+        "",
+        "The graph shows where failure propagates; stress signals show where the "
+        "remaining margin is already thin.",
+        "",
+    ]
+
+    for s in top:
+        lines.append("- " + _render_stress_bullet(s, map_data))
+
+    return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
 # Deterministic timeline section
 # ---------------------------------------------------------------------------
 
@@ -1071,11 +1656,13 @@ def build_recommendations(findings: list, stale_edges: list,
 
     top_pods = [f["pod"] for f in findings if f.get("pod")][:3]
     if top_pods:
+        pods_str = ", ".join(p.capitalize() for p in top_pods[:-1])
+        last_pod = top_pods[-1].capitalize()
+        pods_or  = f"{pods_str}, or {last_pod}" if len(top_pods) > 1 else last_pod
         monitor_recs.append(
-            f"Designate {', '.join(p.capitalize() for p in top_pods)} as Tier-1 targets "
-            f"for the next resilience review. "
-            f"Their computed blast radii produce the largest cascades in the colony. "
-            f"No new infrastructure should increase dependency on them before redundancy is restored."
+            f"No Phase 3 expansion should increase dependency on {pods_or} "
+            f"until independent backup paths are restored. "
+            f"Their computed blast radii produce the largest cascades in the colony."
         )
 
     def _numbered(items: list) -> str:
@@ -1186,8 +1773,9 @@ Rules:
 
 def assemble_report(map_data: dict, mermaid: str, exec_summary: str,
                     agent_found: str, topology_note: str, priority_table: str,
-                    finding_paragraphs: str, timeline_section: str,
-                    recommendations: str, llm_prose: dict) -> str:
+                    finding_paragraphs: str, stress_signals: str,
+                    timeline_section: str, recommendations: str,
+                    llm_prose: dict) -> str:
     """
     Stitch all deterministic sections and optional LLM addenda into final report.md.
     New section order:
@@ -1240,6 +1828,11 @@ def assemble_report(map_data: dict, mermaid: str, exec_summary: str,
         "unresolved warnings, and dependency mismatches."
     )
 
+    # Stress signals block — insert as subsection with separator only if non-empty
+    stress_signals_block = (
+        f"\n---\n\n{stress_signals}" if stress_signals else ""
+    )
+
     report = f"""# Project Selene Infrastructure Resilience Assessment
 
 ## 1. Executive Snapshot
@@ -1256,7 +1849,7 @@ def assemble_report(map_data: dict, mermaid: str, exec_summary: str,
 
 ## 3. Colony Dependency Map
 
-In this graph, **A → B** means *A* depends on *B*. Dashed edges indicate stale or contradicted dependency records (routes that were removed or sealed). Concentration risks — active dependencies where backup paths were removed — remain as solid edges. Red nodes are articulation points or top blast-radius pods.
+In this graph, **A → B** means *A* depends on *B*. The diagram below shows the risk-relevant dependency paths. The complete discovered dependency graph is preserved in `map.json`. Dashed edges indicate stale routes or removed backup paths. Concentration risks — active dependencies where backup paths were removed — remain as solid edges. Red nodes are articulation points or top blast-radius pods.
 
 ```mermaid
 {mermaid}
@@ -1271,6 +1864,8 @@ In this graph, **A → B** means *A* depends on *B*. Dashed edges indicate stale
 {priority_table}
 
 {finding_paragraphs}
+
+{stress_signals_block}
 
 ---
 
@@ -1329,6 +1924,7 @@ def main():
     agent_found      = build_agent_found_section(map_data)
     topology_note    = build_topology_note(map_data, top3_pod_ids)
     finding_paras    = build_finding_paragraphs(findings, map_data)
+    stress_signals   = build_stress_signals_section(map_data)
     timeline_section = build_timeline_section(map_data)
     edges            = map_data.get("edges", {})
     recs             = build_recommendations(
@@ -1346,7 +1942,8 @@ def main():
     print("[reporter] assembling report", flush=True)
     report_content = assemble_report(
         map_data, mermaid, exec_summary, agent_found, topology_note,
-        priority_table, finding_paras, timeline_section, recs, llm_prose,
+        priority_table, finding_paras, stress_signals, timeline_section,
+        recs, llm_prose,
     )
 
     os.makedirs(os.path.dirname(REPORT_PATH), exist_ok=True)
