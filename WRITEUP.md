@@ -2,6 +2,8 @@
 
 **Neil Advani · Independent Infrastructure Resilience Assessment**
 
+A healthy status page is not the same thing as a resilient system.
+
 ---
 
 ## The Two Decisions That Shaped Everything
@@ -17,6 +19,8 @@ So `graph.py` owns every measurement without exception — blast radius, trust s
 This also means the mapper is fully reproducible. Run it ten times, get the same `map.json`. That matters for an infrastructure assessment tool — if the measurement layer is stochastic, you can't trust it.
 
 ### Decision 2 — Don't flatten the dependency model
+
+A dependency graph can tell you where risk travels, but not whether the map is still true.
 
 The obvious approach is to collect `/dependencies` and `/supplies`, build a graph, and call edges either "present" or "missing." I didn't do that because it collapses three fundamentally different conditions into one:
 
@@ -48,6 +52,8 @@ The final report is organized around four layers: blast radius shows where failu
 ---
 
 ## What the Agent Found
+
+The measurements point to one pattern: the colony did not fail; it quietly lost its margin.
 
 **The core finding is a zero-redundancy dependency cycle.**
 
